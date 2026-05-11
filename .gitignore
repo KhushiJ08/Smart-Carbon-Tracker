@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Node
 node_modules/
 
@@ -11,5 +12,18 @@ yarn-debug.log*
 yarn-error.log*
 
 # OS
+=======
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# System files
+>>>>>>> 580d472e50cb7d4ce8394fbe1151b7eb5429921a
 .DS_Store
 Thumbs.db
