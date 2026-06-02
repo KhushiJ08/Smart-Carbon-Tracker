@@ -88,8 +88,7 @@ python app.py
 ---
 
 ## 👩‍💻 Contributors
-- Khushi
-- Team Members
+- Khushi Jatolia (Solo Developer)
 
 ---
 
