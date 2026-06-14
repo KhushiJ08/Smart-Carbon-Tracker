@@ -1,0 +1,146 @@
+.signup-page {
+  min-height: 100vh;
+
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.72), rgba(0, 0, 0, 0.72)),
+    url("https://images.unsplash.com/photo-1441974231531-c6227db76b6e");
+
+  background-size: cover;
+  background-position: center;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 120px 20px 40px;
+}
+
+.signup-container {
+  width: 100%;
+  max-width: 460px;
+
+  padding: 36px;
+
+  border-radius: 26px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  backdrop-filter: blur(14px);
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.join-badge {
+  display: inline-block;
+
+  padding: 8px 16px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  color: white;
+
+  font-size: 14px;
+
+  margin-bottom: 22px;
+}
+
+.signup-title {
+  font-size: 42px;
+  line-height: 1.15;
+
+  font-weight: 800;
+
+  color: white;
+
+  margin-bottom: 16px;
+}
+
+.signup-title span {
+  color: #c7f0b1;
+}
+
+.signup-subtitle {
+  font-size: 16px;
+  line-height: 1.7;
+
+  color: rgba(255, 255, 255, 0.82);
+
+  margin-bottom: 28px;
+}
+
+.signup-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 16px;
+}
+
+.signup-form input {
+  width: 100%;
+
+  padding: 16px;
+
+  border: none;
+  outline: none;
+
+  border-radius: 16px;
+
+  background: rgba(255, 255, 255, 0.12);
+
+  color: white;
+
+  font-size: 15px;
+
+  box-sizing: border-box;
+}
+
+.signup-form input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.signup-form button {
+  width: 100%;
+
+  padding: 16px;
+
+  border: none;
+
+  border-radius: 16px;
+
+  background: #c7f0b1;
+
+  color: #111;
+
+  font-size: 18px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition: 0.3s;
+}
+
+.signup-form button:hover {
+  background: #d7f7c5;
+}
+
+.bottom-text {
+  text-align: center;
+
+  margin-top: 22px;
+
+  color: rgba(255, 255, 255, 0.85);
+
+  font-size: 15px;
+}
+
+.bottom-text a {
+  color: #c7f0b1;
+
+  text-decoration: none;
+
+  font-weight: 700;
+}

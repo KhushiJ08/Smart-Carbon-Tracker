@@ -1,0 +1,85 @@
+.activity-page {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(4, 8, 20, 0.8), rgba(4, 8, 20, 0.82)),
+    url("https://images.unsplash.com/photo-1448375240586-882707db888b?q=80&w=1974&auto=format&fit=crop");
+  background-size: cover;
+  background-position: center;
+  padding: 120px 20px 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.activity-container {
+  width: 100%;
+  max-width: 550px;
+}
+
+.activity-card {
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(18px);
+  border-radius: 28px;
+  padding: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: white;
+}
+
+.activity-card h1 {
+  font-size: 38px;
+  margin-bottom: 14px;
+}
+
+.activity-card p {
+  color: #d8d8d8;
+  margin-bottom: 30px;
+  line-height: 1.6;
+}
+
+.activity-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.input-group label {
+  margin-bottom: 10px;
+  color: #b8e7a9;
+  font-weight: 600;
+}
+
+.input-group input {
+  padding: 16px;
+  border-radius: 16px;
+  border: none;
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  color: white;
+  font-size: 16px;
+}
+
+.input-group input::placeholder {
+  color: #cfcfcf;
+}
+
+.submit-btn {
+  margin-top: 10px;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: #b8e7a9;
+  color: #111;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+.submit-btn:hover {
+  transform: translateY(-2px);
+}
