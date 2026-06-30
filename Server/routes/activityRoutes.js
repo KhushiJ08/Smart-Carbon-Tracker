@@ -1,3 +1,4 @@
+console.log("✅ activityRoutes loaded");
 const express = require("express");
 const {
   addActivity,
