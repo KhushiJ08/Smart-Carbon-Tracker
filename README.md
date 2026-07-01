@@ -1,104 +1,109 @@
 # 🌱 Smart Carbon Tracker
 
-## 📘 Project Overview
-Smart Carbon Tracker is a web-based application designed to monitor, visualize, and predict carbon emissions generated from daily activities. The system helps users understand their environmental impact and promotes sustainable practices through dashboard analytics and AI-based prediction models.
+An AI-powered web application that helps users monitor, analyze, and reduce their carbon footprint through activity tracking, analytics, and personalized sustainability recommendations.
 
 ---
 
-## ✨ Features
-- User Signup and Login
-- Carbon Activity Tracking
-- Dashboard Visualization
-- Carbon Emission Analytics
-- AI-Based Carbon Prediction
-- Sustainability Recommendations
-- Responsive User Interface
-- Cloud Deployment Support
+## Features
+
+- User Authentication
+- Daily Carbon Activity Tracking
+- Carbon Emission Dashboard
+- Weekly Emission Analytics
+- AI-based Carbon Emission Prediction
+- Personalized Sustainability Recommendations
+- RESTful Backend APIs
+- MongoDB Database Integration
 
 ---
 
-## 🛠️ Tech Stack
+## Technology Stack
 
-| Component | Technology |
-|---|---|
-| Frontend | React.js |
-| Backend | Node.js, Express.js |
-| Database | MongoDB |
-| AI Module | Flask, Scikit-learn |
-| Deployment | Vercel, Railway |
-| Visualization | Chart.js |
+### Frontend
+
+- React.js
+- CSS
+- Axios
+- Chart.js
+
+### Backend
+
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+
+### AI Module
+
+- Python
+- Scikit-learn
+- Linear Regression
+- Polynomial Regression
 
 ---
 
-## ⚙️ Installation Steps
+## Project Structure
 
-### 1. Clone Repository
-
-```bash
-git clone https://github.com/Khushi08/Smart-Carbon-Tracker.git
+```
+Smart Carbon Tracker
+│
+├── client/
+├── server/
+├── ai/
+│   ├── datasets/
+│   └── models/
+├── docs/
+├── README.md
 ```
 
-### 2. Frontend Setup
+---
+
+## Installation
+
+### Clone Repository
 
 ```bash
-cd frontend
+git clone https://github.com/KhushiJ08/Smart-Carbon-Tracker.git
+```
+
+### Backend
+
+```bash
+cd server
 npm install
 npm start
 ```
 
-### 3. Backend Setup
+### Frontend
 
 ```bash
-cd backend
+cd client
 npm install
 npm start
 ```
 
-### 4. AI Model Setup
+---
 
-```bash
-cd ai-model
-pip install -r requirements.txt
-python app.py
-```
+## Future Improvements
+
+- Weather API Integration
+- Air Quality Monitoring
+- Deep Learning Prediction Models
+- Mobile Application
+- Real-time Carbon Insights
 
 ---
 
-## 🚀 Deployment Links
+## Author
 
-### Frontend Deployment
-(Add your Vercel link here)
+Khushi Jatolia
 
-### Backend API
-(Add your Railway link here)
+B.Tech Information Technology
 
----
-
-## 📸 Screenshots
-
-### Dashboard
-(Add dashboard screenshot)
-
-### AI Prediction Output
-(Add prediction screenshot)
-
-### Deployment
-(Add deployment screenshot)
+Rajiv Gandhi Institute of Petroleum Technology (RGIPT)
 
 ---
 
-## 👩‍💻 Contributors
-- Khushi Jatolia (Solo Developer)
+## License
 
----
-
-## 🔮 Future Scope
-- Mobile Application Development
-- IoT Integration
-- Advanced AI Models
-- Real-Time Carbon Monitoring
-
----
-
-## 📄 License
-This project is developed for educational and sustainability purposes.
+This project is developed for academic and research purposes.
