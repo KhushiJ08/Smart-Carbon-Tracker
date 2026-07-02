@@ -1,26 +1,28 @@
 # 🌱 Smart Carbon Tracker
 
-A full-stack MERN application that helps users monitor, analyze, and reduce their carbon footprint through activity tracking, analytics, and AI-powered sustainability recommendations.
+An AI-powered full-stack MERN web application that enables users to monitor, analyze, and reduce their carbon footprint through daily activity tracking, interactive analytics, and intelligent sustainability recommendations.
 
 ---
 
-## Features
+## ✨ Features
 
-- User Authentication (Login & Signup)
-- Carbon Emission Tracking
-- Dashboard with Analytics
-- Weekly Emission Visualization
-- AI Sustainability Recommendations
-- Activity Management
-- Responsive User Interface
+- 🔐 Secure User Authentication (Login & Signup)
+- 🌍 Daily Carbon Emission Tracking
+- 📊 Interactive Dashboard with Analytics
+- 📈 Weekly Carbon Emission Visualization
+- 🤖 AI-powered Sustainability Recommendations
+- 📝 Activity Management (Add & View Activities)
+- 💡 Carbon Reduction Insights
+- 📱 Responsive and Modern User Interface
 
 ---
 
-## Tech Stack
+## 🛠️ Technology Stack
 
 ### Frontend
 - React.js
-- CSS
+- HTML5
+- CSS3
 - Axios
 
 ### Backend
@@ -30,85 +32,107 @@ A full-stack MERN application that helps users monitor, analyze, and reduce thei
 ### Database
 - MongoDB Atlas
 
-### Tools
+### AI / Machine Learning
+- Python
+- Scikit-learn
+- Linear Regression (Prediction Module)
+
+### Development Tools
 - Git
 - GitHub
+- VS Code
 - Postman
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
-```
-Smart-Carbon-Tracker
+```text
+Smart-Carbon-Tracker/
 │
-├── client
-├── server
-├── ai
-├── docs
-└── README.md
+├── client/
+├── server/
+├── ai/
+├── docs/
+├── screenshots/
+├── README.md
+├── package.json
+└── .gitignore
 ```
 
 ---
 
-## Screenshots
+## 📸 Project Screenshots
 
-### Home
+### 🏠 Home Page
 
 ![Home](screenshots/home.png)
 
 ---
 
-### Login
+### 🔑 Login Page
 
 ![Login](screenshots/login.png)
 
 ---
 
-### Signup
+### 📝 Signup Page
 
 ![Signup](screenshots/signup.png)
 
 ---
 
-### Dashboard
-
-![Dashboard](screenshots/dashboard.png)
-
----
-
-### Add Activity
+### ➕ Add Activity
 
 ![Add Activity](screenshots/add-activity.png)
 
 ---
 
-### AI Recommendations
+### 📊 Dashboard
 
-![Dashboard Bottom](screenshots/dashboard-bottom.png)
-
----
-
-## Future Improvements
-
-- AI-based emission prediction
-- Personalized sustainability suggestions
-- Carbon footprint trends
-- Goal tracking
-- Weather integration
-- Mobile responsive version
+![Dashboard](screenshots/dashboard.png)
 
 ---
 
-## Author
+### 🤖 AI Sustainability Recommendations
+
+![AI Recommendations](screenshots/dashboard-bottom.png)
+
+---
+
+## 🏗️ System Architecture
+
+![System Architecture](docs/system-architecture.png)
+
+---
+
+## 🚀 Future Improvements
+
+- Deep Learning based Carbon Prediction
+- Personalized AI Recommendations
+- Weather API Integration
+- Real-time Environmental Data
+- Goal Tracking & Progress Monitoring
+- Monthly & Yearly Emission Reports
+- Email Notifications
+- Mobile Responsive Optimization
+- Deployment on Cloud Platform
+
+---
+
+## 👨‍💻 Author
 
 **Khushi Jatolia**
 
 B.Tech Information Technology  
-Rajiv Gandhi Institute of Petroleum Technology
+Rajiv Gandhi Institute of Petroleum Technology (RGIPT)
+
+GitHub: https://github.com/KhushiJ08
 
 ---
 
-## License
+## 📄 License
 
-This project is developed for educational and learning purposes.
+This project has been developed for academic, research, and educational purposes.
+
+© 2026 Khushi Jatolia. All rights reserved.
