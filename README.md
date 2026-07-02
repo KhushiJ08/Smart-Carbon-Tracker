@@ -82,15 +82,15 @@ Smart-Carbon-Tracker/
 
 ---
 
-### ➕ Add Activity
-
-![Add Activity](screenshots/add-activity.png)
-
----
-
 ### 📊 Dashboard
 
 ![Dashboard](screenshots/dashboard.png)
+
+---
+
+### ➕ Add Activity
+
+![Add Activity](screenshots/add-activity.png)
 
 ---
 
