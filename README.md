@@ -1,109 +1,138 @@
 # 🌱 Smart Carbon Tracker
 
-An AI-powered web application that helps users monitor, analyze, and reduce their carbon footprint through activity tracking, analytics, and personalized sustainability recommendations.
+An AI-powered full-stack MERN web application that enables users to monitor, analyze, and reduce their carbon footprint through daily activity tracking, interactive analytics, and intelligent sustainability recommendations.
 
 ---
 
-## Features
+## ✨ Features
 
-- User Authentication
-- Daily Carbon Activity Tracking
-- Carbon Emission Dashboard
-- Weekly Emission Analytics
-- AI-based Carbon Emission Prediction
-- Personalized Sustainability Recommendations
-- RESTful Backend APIs
-- MongoDB Database Integration
+- 🔐 Secure User Authentication (Login & Signup)
+- 🌍 Daily Carbon Emission Tracking
+- 📊 Interactive Dashboard with Analytics
+- 📈 Weekly Carbon Emission Visualization
+- 🤖 AI-powered Sustainability Recommendations
+- 📝 Activity Management (Add & View Activities)
+- 💡 Carbon Reduction Insights
+- 📱 Responsive and Modern User Interface
 
 ---
 
-## Technology Stack
+## 🛠️ Technology Stack
 
 ### Frontend
-
 - React.js
-- CSS
+- HTML5
+- CSS3
 - Axios
-- Chart.js
 
 ### Backend
-
 - Node.js
 - Express.js
-- MongoDB
-- Mongoose
 
-### AI Module
+### Database
+- MongoDB Atlas
 
+### AI / Machine Learning
 - Python
 - Scikit-learn
-- Linear Regression
-- Polynomial Regression
+- Linear Regression (Prediction Module)
+
+### Development Tools
+- Git
+- GitHub
+- VS Code
+- Postman
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
-```
-Smart Carbon Tracker
+```text
+Smart-Carbon-Tracker/
 │
 ├── client/
 ├── server/
 ├── ai/
-│   ├── datasets/
-│   └── models/
 ├── docs/
+├── screenshots/
 ├── README.md
+├── package.json
+└── .gitignore
 ```
 
 ---
 
-## Installation
+## 📸 Project Screenshots
 
-### Clone Repository
+### 🏠 Home Page
 
-```bash
-git clone https://github.com/KhushiJ08/Smart-Carbon-Tracker.git
-```
-
-### Backend
-
-```bash
-cd server
-npm install
-npm start
-```
-
-### Frontend
-
-```bash
-cd client
-npm install
-npm start
-```
+![Home](screenshots/home.png)
 
 ---
 
-## Future Improvements
+### 🔑 Login Page
 
+![Login](screenshots/login.png)
+
+---
+
+### 📝 Signup Page
+
+![Signup](screenshots/signup.png)
+
+---
+
+### 📊 Dashboard
+
+![Dashboard](screenshots/dashboard.png)
+
+---
+
+### ➕ Add Activity
+
+![Add Activity](screenshots/add-activity.png)
+
+---
+
+### 🤖 AI Sustainability Recommendations
+
+![AI Recommendations](screenshots/dashboard-bottom.png)
+
+---
+
+## 🏗️ System Architecture
+
+![System Architecture](docs/system-architecture.png)
+
+---
+
+## 🚀 Future Improvements
+
+- Deep Learning based Carbon Prediction
+- Personalized AI Recommendations
 - Weather API Integration
-- Air Quality Monitoring
-- Deep Learning Prediction Models
-- Mobile Application
-- Real-time Carbon Insights
+- Real-time Environmental Data
+- Goal Tracking & Progress Monitoring
+- Monthly & Yearly Emission Reports
+- Email Notifications
+- Mobile Responsive Optimization
+- Deployment on Cloud Platform
 
 ---
 
-## Author
+## 👨‍💻 Author
 
-Khushi Jatolia
+**Khushi Jatolia**
 
-B.Tech Information Technology
-
+B.Tech Information Technology  
 Rajiv Gandhi Institute of Petroleum Technology (RGIPT)
 
+GitHub: https://github.com/KhushiJ08
+
 ---
 
-## License
+## 📄 License
 
-This project is developed for academic and research purposes.
+This project has been developed for academic, research, and educational purposes.
+
+© 2026 Khushi Jatolia. All rights reserved.
