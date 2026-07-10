@@ -18,9 +18,8 @@ function ActivityTable({ activities }) {
         <thead>
           <tr>
             <th>Category</th>
-            <th>Description</th>
-            <th>Value</th>
-            <th>Unit</th>
+            <th>Emission</th>
+            <th>Date</th>
           </tr>
         </thead>
 
@@ -28,9 +27,10 @@ function ActivityTable({ activities }) {
           {activities.map((activity) => (
             <tr key={activity._id}>
               <td>{activity.category}</td>
-              <td>{activity.description}</td>
-              <td>{activity.value}</td>
-              <td>{activity.unit}</td>
+
+              <td>{activity.emission ?? activity.value} kg CO₂</td>
+
+              <td>{new Date(activity.date).toLocaleDateString()}</td>
             </tr>
           ))}
         </tbody>

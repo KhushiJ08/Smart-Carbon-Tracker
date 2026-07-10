@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "Smart Carbon Tracker"
+type: software
+
+authors:
+  - family-names: "Jatolia"
+    given-names: "Khushi"
+
+version: "1.0.0"
+date-released: "2026-07-10"
+
+abstract: >
+  Smart Carbon Tracker is an AI-driven web application for tracking,
+  analyzing, and predicting carbon emissions using machine learning.
+  The platform combines a React frontend, Node.js backend,
+  MongoDB database, and Python-based AI module to help users
+  monitor their environmental impact.
+
+keywords:
+  - Carbon Footprint
+  - Sustainability
+  - Machine Learning
+  - MERN Stack
+  - React
+  - Node.js
+  - MongoDB
+  - Environmental Monitoring
+
+license: MIT
+
+repository-code: "https://github.com/KhushiJ08/Smart-Carbon-Tracker"

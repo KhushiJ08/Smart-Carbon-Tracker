@@ -1,14 +1,22 @@
 import React, { useState } from "react";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const AddActivity = () => {
+  const navigate = useNavigate();
+
   const [category, setCategory] = useState("");
   const [emission, setEmission] = useState("");
 
-  // Categories
-  const categories = ["Transport", "Electricity", "Food", "Fuel", "Travel"];
+  const categories = [
+    "Transport",
+    "Electricity",
+    "Food",
+    "Fuel",
+    "Travel",
+  ];
 
-  // Submit Function
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!category || !emission) {
@@ -16,25 +24,29 @@ const AddActivity = () => {
       return;
     }
 
-    const newActivity = {
-      category,
-      emission: Number(emission),
-    };
+    const user = JSON.parse(localStorage.getItem("user"));
 
-    // Get old activities
-    const oldActivities = JSON.parse(localStorage.getItem("activities")) || [];
+    if (!user) {
+      alert("Please login first");
+      navigate("/login");
+      return;
+    }
 
-    // Add new activity
-    oldActivities.push(newActivity);
+    try {
+      await axios.post("http://localhost:5000/api/activities/add", {
+        userId: user._id,
+        category,
+        emission: Number(emission),
+        date: new Date(),
+      });
 
-    // Save updated activities
-    localStorage.setItem("activities", JSON.stringify(oldActivities));
+      alert("Activity Added Successfully");
 
-    alert("Activity Added Successfully");
-
-    // Reset form
-    setCategory("");
-    setEmission("");
+      navigate("/dashboard");
+    } catch (err) {
+      console.log(err);
+      alert("Failed to add activity");
+    }
   };
 
   return (
@@ -64,96 +76,33 @@ const AddActivity = () => {
           boxShadow: "0px 0px 15px rgba(0,0,0,0.5)",
         }}
       >
-        <h2
-          style={{
-            textAlign: "center",
-          }}
+        <h2 style={{ textAlign: "center" }}>Add Daily Activity</h2>
+
+        <label>Category</label>
+
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          required
         >
-          Add Daily Activity
-        </h2>
+          <option value="">Select Category</option>
 
-        {/* CATEGORY */}
-        <div>
-          <label
-            style={{
-              fontSize: "16px",
-              fontWeight: "bold",
-            }}
-          >
-            Category
-          </label>
+          {categories.map((cat) => (
+            <option key={cat}>{cat}</option>
+          ))}
+        </select>
 
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-            style={{
-              width: "100%",
-              padding: "12px",
-              marginTop: "8px",
-              borderRadius: "8px",
-              fontSize: "16px",
-              backgroundColor: "white",
-              color: "black",
-              border: "1px solid #ccc",
-              outline: "none",
-            }}
-          >
-            <option value="">Select Category</option>
+        <label>Emission (kg CO₂)</label>
 
-            {categories.map((cat, index) => (
-              <option key={index} value={cat}>
-                {cat}
-              </option>
-            ))}
-          </select>
-        </div>
+        <input
+          type="number"
+          value={emission}
+          onChange={(e) => setEmission(e.target.value)}
+          placeholder="Enter emission"
+          required
+        />
 
-        {/* EMISSION */}
-        <div>
-          <label
-            style={{
-              fontSize: "16px",
-              fontWeight: "bold",
-            }}
-          >
-            Emission (kg CO₂)
-          </label>
-
-          <input
-            type="number"
-            placeholder="Enter emission"
-            value={emission}
-            onChange={(e) => setEmission(e.target.value)}
-            required
-            style={{
-              width: "100%",
-              padding: "12px",
-              marginTop: "8px",
-              borderRadius: "8px",
-              fontSize: "16px",
-              backgroundColor: "white",
-              color: "black",
-              border: "1px solid #ccc",
-              outline: "none",
-            }}
-          />
-        </div>
-
-        {/* BUTTON */}
-        <button
-          type="submit"
-          style={{
-            padding: "12px",
-            backgroundColor: "#90EE90",
-            color: "black",
-            border: "none",
-            borderRadius: "10px",
-            fontSize: "18px",
-            fontWeight: "bold",
-            cursor: "pointer",
-          }}
-        >
+        <button type="submit">
           Save Activity
         </button>
       </form>

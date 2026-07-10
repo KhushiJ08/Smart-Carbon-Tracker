@@ -8,31 +8,25 @@ import {
   Tooltip,
 } from "recharts";
 
-const data = [
-  { day: "Mon", emission: 18 },
-  { day: "Tue", emission: 16 },
-  { day: "Wed", emission: 20 },
-  { day: "Thu", emission: 14 },
-  { day: "Fri", emission: 17 },
-  { day: "Sat", emission: 12 },
-  { day: "Sun", emission: 15 },
-];
+export default function BarChart({ activities }) {
+  const chartData = activities.map((activity, index) => ({
+    day: `A${index + 1}`,
+    emission: Number(activity.activityData || activity.value || 0),
+  }));
 
-export default function BarChart() {
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data}>
+      <LineChart data={chartData}>
         <CartesianGrid stroke="#444" strokeDasharray="3 3" />
 
-        <XAxis dataKey="day" stroke="#ffffff" tick={{ fill: "#ffffff" }} />
+        <XAxis dataKey="day" stroke="#fff" tick={{ fill: "#fff" }} />
 
-        <YAxis stroke="#ffffff" tick={{ fill: "#ffffff" }} />
+        <YAxis stroke="#fff" tick={{ fill: "#fff" }} />
 
         <Tooltip
           contentStyle={{
-            backgroundColor: "#1c1c1c",
-            border: "1px solid #8ef58e",
-            borderRadius: "10px",
+            background: "#111",
+            borderRadius: 10,
           }}
         />
 
@@ -41,7 +35,6 @@ export default function BarChart() {
           dataKey="emission"
           stroke="#8ef58e"
           strokeWidth={4}
-          dot={{ fill: "#8ef58e", r: 5 }}
         />
       </LineChart>
     </ResponsiveContainer>

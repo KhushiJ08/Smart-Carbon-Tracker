@@ -1,99 +1,60 @@
-exports.calculateCarbon = async (req, res) => {
-  try {
-    const { userId } = req.body;
-
-    const mockCarbonData = {
-      userId,
-      totalEmissions: 50,
-      breakdown: {
-        transport: 20,
-        electricity: 20,
-        food: 10,
-      },
-    };
-
-    res.status(200).json({
-      message: "Carbon footprint calculated (mock mode)",
-      data: mockCarbonData,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// controllers/carbonController.js
-// NOTE: Mock implementation used since database integration is pending
+const { spawn } = require("child_process");
+const path = require("path");
 
 exports.calculateCarbon = async (req, res) => {
   try {
-    const { userId } = req.body;
+    const { transport, electricity, fuel } = req.body;
 
-    const mockCarbonData = {
-      userId,
-      totalEmissions: 50,
-      breakdown: {
-        transport: 20,
-        electricity: 20,
-        food: 10,
-      },
-    };
+    const pythonScript = path.join(__dirname, "../../ai/predict.py");
 
-    res.status(200).json({
-      message: "Carbon footprint calculated (mock mode)",
-      data: mockCarbonData,
+    const python = spawn("python", [
+      pythonScript,
+      transport.toString(),
+      electricity.toString(),
+      fuel.toString(),
+    ]);
+
+    let result = "";
+    let error = "";
+
+    python.stdout.on("data", (data) => {
+      result += data.toString();
+    });
+
+    python.stderr.on("data", (data) => {
+      error += data.toString();
+    });
+
+    python.on("close", (code) => {
+      if (code !== 0) {
+        console.error(error);
+
+        return res.status(500).json({
+          success: false,
+          message: error,
+        });
+      }
+
+      try {
+        const prediction = JSON.parse(result);
+
+        res.status(200).json({
+          success: true,
+          prediction,
+        });
+      } catch (err) {
+        console.error(result);
+
+        res.status(500).json({
+          success: false,
+          message: "Prediction failed",
+        });
+      }
     });
   } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-// controllers/activityController.js
-
-let mockActivities = []; // in-memory storage (NO DB)
-
-exports.addActivity = async (req, res) => {
-  try {
-    const { userId, category, description, activityData, date } = req.body;
-
-    if (!userId || !category || !activityData) {
-      return res.status(400).json({
-        message: "Required fields missing",
-      });
-    }
-
-    const newActivity = {
-      id: mockActivities.length + 1,
-      userId,
-      category,
-      description,
-      activityData,
-      date: date || new Date(),
-    };
-
-    mockActivities.push(newActivity);
-
-    res.status(201).json({
-      message: "Activity added successfully (mock)",
-      data: newActivity,
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
-  }
-};
-
-exports.getActivitiesByUser = async (req, res) => {
-  try {
-    const { userId } = req.params;
-
-    const userActivities = mockActivities.filter(
-      (activity) => activity.userId === userId
-    );
-
-    res.status(200).json({
-      message: "Activities fetched successfully (mock)",
-      data: userActivities,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
   }
 };
