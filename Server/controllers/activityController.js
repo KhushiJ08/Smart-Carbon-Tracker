@@ -45,8 +45,52 @@ const getActivitiesByUser = async (req, res) => {
   }
 };
 
+// Update Activity
+const updateActivity = async (req, res) => {
+  try {
+    const activity = await Activity.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+
+    if (!activity) {
+      return res.status(404).json({
+        message: "Activity not found",
+      });
+    }
+
+    res.status(200).json(activity);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// Delete Activity
+const deleteActivity = async (req, res) => {
+  try {
+    const activity = await Activity.findByIdAndDelete(req.params.id);
+
+    if (!activity) {
+      return res.status(404).json({
+        message: "Activity not found",
+      });
+    }
+
+    res.status(200).json({
+      message: "Activity deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   addActivity,
   getActivities,
   getActivitiesByUser,
+  updateActivity,
+  deleteActivity,
 };

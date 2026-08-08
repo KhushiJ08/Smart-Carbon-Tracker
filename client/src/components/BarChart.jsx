@@ -1,42 +1,32 @@
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
 } from "recharts";
 
-export default function BarChart({ activities }) {
+export default function Chart({ activities }) {
   const chartData = activities.map((activity, index) => ({
     day: `A${index + 1}`,
-    emission: Number(activity.activityData || activity.value || 0),
+    emission: Number(activity.emission || 0),
   }));
 
   return (
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData}>
-        <CartesianGrid stroke="#444" strokeDasharray="3 3" />
+      <BarChart data={chartData}>
+        <CartesianGrid strokeDasharray="3 3" stroke="#444" />
 
-        <XAxis dataKey="day" stroke="#fff" tick={{ fill: "#fff" }} />
+        <XAxis dataKey="day" stroke="#ffffff" tick={{ fill: "#ffffff" }} />
 
-        <YAxis stroke="#fff" tick={{ fill: "#fff" }} />
+        <YAxis stroke="#ffffff" tick={{ fill: "#ffffff" }} />
 
-        <Tooltip
-          contentStyle={{
-            background: "#111",
-            borderRadius: 10,
-          }}
-        />
+        <Tooltip />
 
-        <Line
-          type="monotone"
-          dataKey="emission"
-          stroke="#8ef58e"
-          strokeWidth={4}
-        />
-      </LineChart>
+        <Bar dataKey="emission" fill="#9BE564" radius={[8, 8, 0, 0]} />
+      </BarChart>
     </ResponsiveContainer>
   );
 }

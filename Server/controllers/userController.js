@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 
 // Register User
 exports.registerUser = async (req, res) => {
@@ -22,10 +23,15 @@ exports.registerUser = async (req, res) => {
       password: hashedPassword,
     });
 
-    res.status(201).json({
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
+    res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      token,
     });
   } catch (error) {
     res.status(500).json({
@@ -33,8 +39,6 @@ exports.registerUser = async (req, res) => {
     });
   }
 };
-
-// Login User
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -55,10 +59,15 @@ exports.loginUser = async (req, res) => {
       });
     }
 
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
+
     res.json({
       _id: user._id,
       name: user.name,
       email: user.email,
+      token,
     });
   } catch (error) {
     res.status(500).json({

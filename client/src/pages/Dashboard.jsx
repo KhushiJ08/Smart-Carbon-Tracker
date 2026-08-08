@@ -26,7 +26,11 @@ export default function Dashboard() {
     }
 
     axios
-      .get(`http://localhost:5000/api/activities/${user._id}`)
+      .get(`http://localhost:5000/api/activities/${user._id}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
+        },
+      })
       .then((res) => {
         const data = res.data;
 

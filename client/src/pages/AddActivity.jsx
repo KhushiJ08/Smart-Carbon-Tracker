@@ -8,14 +8,6 @@ const AddActivity = () => {
   const [category, setCategory] = useState("");
   const [emission, setEmission] = useState("");
 
-  const categories = [
-    "Transport",
-    "Electricity",
-    "Food",
-    "Fuel",
-    "Travel",
-  ];
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -33,15 +25,22 @@ const AddActivity = () => {
     }
 
     try {
-      await axios.post("http://localhost:5000/api/activities/add", {
-        userId: user._id,
-        category,
-        emission: Number(emission),
-        date: new Date(),
-      });
+      await axios.post(
+        "http://localhost:5000/api/activities/add",
+        {
+          userId: user._id,
+          category,
+          emission: Number(emission),
+          date: new Date(),
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        },
+      );
 
       alert("Activity Added Successfully");
-
       navigate("/dashboard");
     } catch (err) {
       console.log(err);
@@ -68,12 +67,12 @@ const AddActivity = () => {
           background: "rgba(0,0,0,0.75)",
           padding: "40px",
           borderRadius: "20px",
-          width: "350px",
+          width: "380px",
           display: "flex",
           flexDirection: "column",
-          gap: "20px",
+          gap: "18px",
           color: "white",
-          boxShadow: "0px 0px 15px rgba(0,0,0,0.5)",
+          boxShadow: "0 0 15px rgba(0,0,0,0.5)",
         }}
       >
         <h2 style={{ textAlign: "center" }}>Add Daily Activity</h2>
@@ -83,13 +82,21 @@ const AddActivity = () => {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value)}
+          style={{
+            padding: "12px",
+            borderRadius: "8px",
+            fontSize: "16px",
+            background: "white",
+            color: "black",
+          }}
           required
         >
           <option value="">Select Category</option>
-
-          {categories.map((cat) => (
-            <option key={cat}>{cat}</option>
-          ))}
+          <option value="Transport">Transport</option>
+          <option value="Electricity">Electricity</option>
+          <option value="Food">Food</option>
+          <option value="Fuel">Fuel</option>
+          <option value="Travel">Travel</option>
         </select>
 
         <label>Emission (kg CO₂)</label>
@@ -99,10 +106,29 @@ const AddActivity = () => {
           value={emission}
           onChange={(e) => setEmission(e.target.value)}
           placeholder="Enter emission"
+          style={{
+            padding: "12px",
+            borderRadius: "8px",
+            fontSize: "16px",
+            background: "white",
+            color: "black",
+          }}
           required
         />
 
-        <button type="submit">
+        <button
+          type="submit"
+          style={{
+            padding: "14px",
+            border: "none",
+            borderRadius: "8px",
+            background: "#9BE67A",
+            color: "#111",
+            fontSize: "16px",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
           Save Activity
         </button>
       </form>
