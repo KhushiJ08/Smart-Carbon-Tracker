@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:5000/api/users/";
+const API_URL = "https://smart-carbon-tracker-backend.onrender.com/api/users/";
 
 export const loginUser = async (data) => {
   const response = await axios.post(API_URL + "login", data);

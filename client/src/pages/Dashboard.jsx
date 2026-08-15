@@ -26,11 +26,13 @@ export default function Dashboard() {
     }
 
     axios
-      .get(`http://localhost:5000/api/activities/${user._id}`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
+      .get(`https://smart-carbon-tracker-backend.onrender.com/api/activities/${user._id}`, 
+        {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
         },
-      })
+      )
       .then((res) => {
         const data = res.data;
 
@@ -70,11 +72,14 @@ export default function Dashboard() {
           .reduce((sum, item) => sum + Number(item.emission || 0), 0);
 
         axios
-          .post("http://localhost:5000/api/carbon/predict", {
-            transport,
-            electricity,
-            fuel,
-          })
+          .post(
+            "https://smart-carbon-tracker-backend.onrender.com/api/carbon/predict",
+            {
+              transport,
+              electricity,
+              fuel,
+            },
+          )
           .then((response) => {
             setPrediction(
               Number(response.data.prediction.predicted_emission).toFixed(2),

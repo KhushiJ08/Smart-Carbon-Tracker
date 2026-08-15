@@ -26,7 +26,7 @@ const AddActivity = () => {
 
     try {
       await axios.post(
-        "http://localhost:5000/api/activities/add",
+        "https://smart-carbon-tracker-backend.onrender.com/api/activities/add",
         {
           userId: user._id,
           category,
