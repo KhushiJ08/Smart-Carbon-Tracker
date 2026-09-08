@@ -21,6 +21,7 @@ const carbonRoutes = require("./routes/carbonRoutes");
 const activityRoutes = require("./routes/activityRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
 
 // =========================
 // API Routes
@@ -30,6 +31,7 @@ app.use("/api/carbon", carbonRoutes);
 app.use("/api/activities", activityRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/weather", weatherRoutes);
 
 // =========================
 // Health Check
