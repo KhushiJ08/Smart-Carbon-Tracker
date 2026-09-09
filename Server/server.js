@@ -1,7 +1,9 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
+
 require("./jobs/environmentalCron");
+
 const connectDB = require("./config/db");
 
 dotenv.config();
@@ -9,7 +11,9 @@ connectDB();
 
 const app = express();
 
+// =========================
 // Middleware
+// =========================
 app.use(cors());
 app.use(express.json());
 
@@ -24,6 +28,7 @@ const recommendationRoutes = require("./routes/recommendationRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
 const airQualityRoutes = require("./routes/airQualityRoutes");
 const environmentRoutes = require("./routes/environmentRoutes");
+
 // =========================
 // API Routes
 // =========================
