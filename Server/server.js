@@ -20,6 +20,7 @@ app.use(express.json());
 // =========================
 // Import Routes
 // =========================
+const { startScheduler } = require("./services/scheduler");
 const userRoutes = require("./routes/userRoutes");
 const carbonRoutes = require("./routes/carbonRoutes");
 const activityRoutes = require("./routes/activityRoutes");
@@ -28,6 +29,7 @@ const recommendationRoutes = require("./routes/recommendationRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
 const airQualityRoutes = require("./routes/airQualityRoutes");
 const environmentRoutes = require("./routes/environmentRoutes");
+startScheduler();
 
 // =========================
 // API Routes

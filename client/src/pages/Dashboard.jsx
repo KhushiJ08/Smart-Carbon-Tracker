@@ -31,6 +31,8 @@ ChartJS.register(
   Legend,
 );
 
+const API = "https://smart-carbon-tracker-backend.onrender.com";
+
 export default function Dashboard() {
   const [activities, setActivities] = useState([]);
 
@@ -38,7 +40,6 @@ export default function Dashboard() {
   const [weekEmission, setWeekEmission] = useState(0);
   const [prediction, setPrediction] = useState("--");
 
-  // Environmental data
   const [environment, setEnvironment] = useState(null);
   const [environmentHistory, setEnvironmentHistory] = useState([]);
 
@@ -52,21 +53,18 @@ export default function Dashboard() {
       return;
     }
 
-    // =========================================
+    // =====================================================
     // CARBON ACTIVITY DATA
-    // =========================================
+    // =====================================================
 
     axios
-      .get(
-        `https://smart-carbon-tracker-backend.onrender.com/api/activities/${user._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
+      .get(`${API}/api/activities/${user._id}`, {
+        headers: {
+          Authorization: `Bearer ${user.token}`,
         },
-      )
+      })
       .then((res) => {
-        const data = res.data;
+        const data = res.data || [];
 
         setActivities(data);
 
@@ -82,6 +80,10 @@ export default function Dashboard() {
         } else {
           setTodayEmission(0);
         }
+
+        // -----------------------------
+        // Prediction data
+        // -----------------------------
 
         const transport = data
           .filter(
@@ -103,20 +105,18 @@ export default function Dashboard() {
           )
           .reduce((sum, item) => sum + Number(item.emission || 0), 0);
 
-        // Carbon prediction
         axios
-          .post(
-            "https://smart-carbon-tracker-backend.onrender.com/api/carbon/predict",
-            {
-              transport,
-              electricity,
-              fuel,
-            },
-          )
+          .post(`${API}/api/carbon/predict`, {
+            transport,
+            electricity,
+            fuel,
+          })
           .then((response) => {
-            setPrediction(
-              Number(response.data.prediction.predicted_emission).toFixed(2),
-            );
+            const predicted = response.data?.prediction?.predicted_emission;
+
+            if (predicted !== undefined) {
+              setPrediction(Number(predicted).toFixed(2));
+            }
           })
           .catch(() => {
             setPrediction("--");
@@ -126,40 +126,36 @@ export default function Dashboard() {
         console.log("Activity data error:", err);
       });
 
-    // =========================================
+    // =====================================================
     // LATEST ENVIRONMENTAL DATA
-    // =========================================
+    // =====================================================
 
     axios
-      .get(
-        "https://smart-carbon-tracker-backend.onrender.com/api/environment/latest/Delhi",
-      )
+      .get(`${API}/api/environment/latest/Delhi`)
       .then((res) => {
-        setEnvironment(res.data.data);
+        setEnvironment(res.data?.data || null);
       })
       .catch((err) => {
         console.log("Environmental data error:", err);
       });
 
-    // =========================================
+    // =====================================================
     // ENVIRONMENTAL HISTORY
-    // =========================================
+    // =====================================================
 
     axios
-      .get(
-        "https://smart-carbon-tracker-backend.onrender.com/api/environment/weekly/Delhi",
-      )
+      .get(`${API}/api/environment/weekly/Delhi`)
       .then((res) => {
-        setEnvironmentHistory(res.data.data || []);
+        setEnvironmentHistory(res.data?.data || []);
       })
       .catch((err) => {
         console.log("Environmental history error:", err);
       });
   }, []);
 
-  // =========================================
-  // AQI CLASSIFICATION
-  // =========================================
+  // =====================================================
+  // AQI STATUS
+  // =====================================================
 
   const getAQIStatus = (aqi) => {
     if (aqi === null || aqi === undefined) {
@@ -175,9 +171,9 @@ export default function Dashboard() {
     return "Hazardous";
   };
 
-  // =========================================
-  // CHART DATA
-  // =========================================
+  // =====================================================
+  // CHART LABELS
+  // =====================================================
 
   const chartLabels = environmentHistory.map((item) =>
     new Date(item.timestamp).toLocaleTimeString([], {
@@ -186,52 +182,123 @@ export default function Dashboard() {
     }),
   );
 
+  // =====================================================
+  // TEMPERATURE CHART
+  // =====================================================
+
   const temperatureData = {
     labels: chartLabels,
     datasets: [
       {
         label: "Temperature (°C)",
-        data: environmentHistory.map((item) => item.temperature),
+        data: environmentHistory.map((item) => Number(item.temperature)),
         tension: 0.3,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
       },
     ],
   };
+
+  // =====================================================
+  // HUMIDITY CHART
+  // =====================================================
 
   const humidityData = {
     labels: chartLabels,
     datasets: [
       {
         label: "Humidity (%)",
-        data: environmentHistory.map((item) => item.humidity),
+        data: environmentHistory.map((item) => Number(item.humidity)),
         tension: 0.3,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
       },
     ],
   };
+
+  // =====================================================
+  // AQI CHART
+  // =====================================================
 
   const aqiData = {
     labels: chartLabels,
     datasets: [
       {
         label: "AQI",
-        data: environmentHistory.map((item) => item.AQI),
+        data: environmentHistory.map((item) => Number(item.AQI)),
         tension: 0.3,
+        borderWidth: 3,
+        pointRadius: 5,
+        pointHoverRadius: 7,
       },
     ],
   };
 
+  // =====================================================
+  // CHART OPTIONS
+  // =====================================================
+
   const chartOptions = {
     responsive: true,
     maintainAspectRatio: false,
+
+    interaction: {
+      mode: "index",
+      intersect: false,
+    },
+
     plugins: {
       legend: {
         display: true,
+        position: "top",
+        labels: {
+          font: {
+            size: 14,
+          },
+        },
+      },
+
+      tooltip: {
+        enabled: true,
+      },
+    },
+
+    scales: {
+      x: {
+        ticks: {
+          autoSkip: false,
+          maxRotation: 0,
+          font: {
+            size: 12,
+          },
+        },
+
+        grid: {
+          display: true,
+        },
+      },
+
+      y: {
+        beginAtZero: false,
+
+        ticks: {
+          font: {
+            size: 12,
+          },
+        },
+
+        grid: {
+          display: true,
+        },
       },
     },
   };
 
-  // =========================================
-  // DASHBOARD UI
-  // =========================================
+  // =====================================================
+  // DASHBOARD
+  // =====================================================
 
   return (
     <>
@@ -239,16 +306,19 @@ export default function Dashboard() {
 
       <div className="dashboard">
         <div className="dashboard-container">
-          {/* HEADER */}
+          {/* =================================================
+              HEADER
+          ================================================= */}
+
           <h1 className="dashboard-title">Smart Carbon Tracker</h1>
 
           <p className="dashboard-subtitle">
             Monitor and reduce your carbon footprint.
           </p>
 
-          {/* =========================================
+          {/* =================================================
               CARBON SUMMARY
-          ========================================= */}
+          ================================================= */}
 
           <div className="summary-section">
             <SummaryCard
@@ -266,9 +336,9 @@ export default function Dashboard() {
             <SummaryCard title="Goal" value={`${goal} kg CO₂`} />
           </div>
 
-          {/* =========================================
-              EXISTING ACTIVITY + CARBON CHART
-          ========================================= */}
+          {/* =================================================
+              ACTIVITIES + WEEKLY EMISSION
+          ================================================= */}
 
           <div className="dashboard-middle">
             <div className="glass-card activity-section">
@@ -282,9 +352,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* =========================================
-              ENVIRONMENTAL DATA
-          ========================================= */}
+          {/* =================================================
+              ENVIRONMENTAL MONITORING
+          ================================================= */}
 
           <div className="environment-section">
             <h2 className="environment-title">Environmental Monitoring</h2>
@@ -293,10 +363,12 @@ export default function Dashboard() {
               Real-time weather and air quality conditions for Delhi.
             </p>
 
-            {/* WEATHER + AIR QUALITY CARDS */}
+            {/* =================================================
+                WEATHER + AIR QUALITY
+            ================================================= */}
 
             <div className="environment-cards">
-              {/* WEATHER CARD */}
+              {/* WEATHER */}
 
               <div className="glass-card environment-card">
                 <h3>🌤️ Weather</h3>
@@ -324,7 +396,7 @@ export default function Dashboard() {
                 )}
               </div>
 
-              {/* AIR QUALITY CARD */}
+              {/* AIR QUALITY */}
 
               <div className="glass-card environment-card">
                 <h3>🌫️ Air Quality</h3>
@@ -353,9 +425,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {/* =========================================
+            {/* =================================================
                 ENVIRONMENTAL CHARTS
-            ========================================= */}
+            ================================================= */}
 
             <div className="environment-charts">
               {/* TEMPERATURE */}
@@ -402,9 +474,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* =========================================
+          {/* =================================================
               AI RECOMMENDATIONS
-          ========================================= */}
+          ================================================= */}
 
           <div className="glass-card recommend-section">
             <RecommendationBox activities={activities} />
