@@ -2,11 +2,34 @@ import "./Dashboard.css";
 import { useEffect, useState } from "react";
 import axios from "axios";
 
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+
+import { Line } from "react-chartjs-2";
+
 import Navbar from "../components/Navbar";
 import SummaryCard from "../components/SummaryCard";
 import ActivityTable from "../components/ActivityTable";
 import RecommendationBox from "../components/RecommendationBox";
 import BarChart from "../components/BarChart";
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+);
 
 export default function Dashboard() {
   const [activities, setActivities] = useState([]);
@@ -14,6 +37,10 @@ export default function Dashboard() {
   const [todayEmission, setTodayEmission] = useState(0);
   const [weekEmission, setWeekEmission] = useState(0);
   const [prediction, setPrediction] = useState("--");
+
+  // Environmental data
+  const [environment, setEnvironment] = useState(null);
+  const [environmentHistory, setEnvironmentHistory] = useState([]);
 
   const goal = 15;
 
@@ -25,8 +52,13 @@ export default function Dashboard() {
       return;
     }
 
+    // =========================================
+    // CARBON ACTIVITY DATA
+    // =========================================
+
     axios
-      .get(`https://smart-carbon-tracker-backend.onrender.com/api/activities/${user._id}`, 
+      .get(
+        `https://smart-carbon-tracker-backend.onrender.com/api/activities/${user._id}`,
         {
           headers: {
             Authorization: `Bearer ${user.token}`,
@@ -71,6 +103,7 @@ export default function Dashboard() {
           )
           .reduce((sum, item) => sum + Number(item.emission || 0), 0);
 
+        // Carbon prediction
         axios
           .post(
             "https://smart-carbon-tracker-backend.onrender.com/api/carbon/predict",
@@ -90,9 +123,115 @@ export default function Dashboard() {
           });
       })
       .catch((err) => {
-        console.log(err);
+        console.log("Activity data error:", err);
+      });
+
+    // =========================================
+    // LATEST ENVIRONMENTAL DATA
+    // =========================================
+
+    axios
+      .get(
+        "https://smart-carbon-tracker-backend.onrender.com/api/environment/latest/Delhi",
+      )
+      .then((res) => {
+        setEnvironment(res.data.data);
+      })
+      .catch((err) => {
+        console.log("Environmental data error:", err);
+      });
+
+    // =========================================
+    // ENVIRONMENTAL HISTORY
+    // =========================================
+
+    axios
+      .get(
+        "https://smart-carbon-tracker-backend.onrender.com/api/environment/weekly/Delhi",
+      )
+      .then((res) => {
+        setEnvironmentHistory(res.data.data || []);
+      })
+      .catch((err) => {
+        console.log("Environmental history error:", err);
       });
   }, []);
+
+  // =========================================
+  // AQI CLASSIFICATION
+  // =========================================
+
+  const getAQIStatus = (aqi) => {
+    if (aqi === null || aqi === undefined) {
+      return "Unknown";
+    }
+
+    if (aqi <= 50) return "Good";
+    if (aqi <= 100) return "Moderate";
+    if (aqi <= 150) return "Unhealthy for Sensitive Groups";
+    if (aqi <= 200) return "Poor";
+    if (aqi <= 300) return "Very Poor";
+
+    return "Hazardous";
+  };
+
+  // =========================================
+  // CHART DATA
+  // =========================================
+
+  const chartLabels = environmentHistory.map((item) =>
+    new Date(item.timestamp).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+    }),
+  );
+
+  const temperatureData = {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: "Temperature (°C)",
+        data: environmentHistory.map((item) => item.temperature),
+        tension: 0.3,
+      },
+    ],
+  };
+
+  const humidityData = {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: "Humidity (%)",
+        data: environmentHistory.map((item) => item.humidity),
+        tension: 0.3,
+      },
+    ],
+  };
+
+  const aqiData = {
+    labels: chartLabels,
+    datasets: [
+      {
+        label: "AQI",
+        data: environmentHistory.map((item) => item.AQI),
+        tension: 0.3,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: true,
+      },
+    },
+  };
+
+  // =========================================
+  // DASHBOARD UI
+  // =========================================
 
   return (
     <>
@@ -100,11 +239,16 @@ export default function Dashboard() {
 
       <div className="dashboard">
         <div className="dashboard-container">
+          {/* HEADER */}
           <h1 className="dashboard-title">Smart Carbon Tracker</h1>
 
           <p className="dashboard-subtitle">
             Monitor and reduce your carbon footprint.
           </p>
+
+          {/* =========================================
+              CARBON SUMMARY
+          ========================================= */}
 
           <div className="summary-section">
             <SummaryCard
@@ -122,6 +266,10 @@ export default function Dashboard() {
             <SummaryCard title="Goal" value={`${goal} kg CO₂`} />
           </div>
 
+          {/* =========================================
+              EXISTING ACTIVITY + CARBON CHART
+          ========================================= */}
+
           <div className="dashboard-middle">
             <div className="glass-card activity-section">
               <ActivityTable activities={activities} />
@@ -133,6 +281,130 @@ export default function Dashboard() {
               <BarChart activities={activities} />
             </div>
           </div>
+
+          {/* =========================================
+              ENVIRONMENTAL DATA
+          ========================================= */}
+
+          <div className="environment-section">
+            <h2 className="environment-title">Environmental Monitoring</h2>
+
+            <p className="environment-subtitle">
+              Real-time weather and air quality conditions for Delhi.
+            </p>
+
+            {/* WEATHER + AIR QUALITY CARDS */}
+
+            <div className="environment-cards">
+              {/* WEATHER CARD */}
+
+              <div className="glass-card environment-card">
+                <h3>🌤️ Weather</h3>
+
+                {environment ? (
+                  <>
+                    <div className="environment-main-value">
+                      {environment.temperature}°C
+                    </div>
+
+                    <p>
+                      <strong>Condition:</strong> {environment.weather}
+                    </p>
+
+                    <p>
+                      <strong>Humidity:</strong> {environment.humidity}%
+                    </p>
+
+                    <p>
+                      <strong>City:</strong> {environment.city}
+                    </p>
+                  </>
+                ) : (
+                  <p>Loading weather data...</p>
+                )}
+              </div>
+
+              {/* AIR QUALITY CARD */}
+
+              <div className="glass-card environment-card">
+                <h3>🌫️ Air Quality</h3>
+
+                {environment ? (
+                  <>
+                    <div className="environment-main-value">
+                      AQI {environment.AQI}
+                    </div>
+
+                    <p>
+                      <strong>Status:</strong> {getAQIStatus(environment.AQI)}
+                    </p>
+
+                    <p>
+                      <strong>PM2.5:</strong> {environment.PM25}
+                    </p>
+
+                    <p>
+                      <strong>PM10:</strong> {environment.PM10}
+                    </p>
+                  </>
+                ) : (
+                  <p>Loading air quality data...</p>
+                )}
+              </div>
+            </div>
+
+            {/* =========================================
+                ENVIRONMENTAL CHARTS
+            ========================================= */}
+
+            <div className="environment-charts">
+              {/* TEMPERATURE */}
+
+              <div className="glass-card environment-chart-card">
+                <h3>🌡️ Temperature Trend</h3>
+
+                <div className="environment-chart">
+                  {environmentHistory.length > 0 ? (
+                    <Line data={temperatureData} options={chartOptions} />
+                  ) : (
+                    <p>Loading temperature data...</p>
+                  )}
+                </div>
+              </div>
+
+              {/* HUMIDITY */}
+
+              <div className="glass-card environment-chart-card">
+                <h3>💧 Humidity Trend</h3>
+
+                <div className="environment-chart">
+                  {environmentHistory.length > 0 ? (
+                    <Line data={humidityData} options={chartOptions} />
+                  ) : (
+                    <p>Loading humidity data...</p>
+                  )}
+                </div>
+              </div>
+
+              {/* AQI */}
+
+              <div className="glass-card environment-chart-card">
+                <h3>🏭 Air Quality Trend</h3>
+
+                <div className="environment-chart">
+                  {environmentHistory.length > 0 ? (
+                    <Line data={aqiData} options={chartOptions} />
+                  ) : (
+                    <p>Loading AQI data...</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* =========================================
+              AI RECOMMENDATIONS
+          ========================================= */}
 
           <div className="glass-card recommend-section">
             <RecommendationBox activities={activities} />
