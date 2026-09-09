@@ -1,7 +1,7 @@
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
-
+require("./jobs/environmentalCron");
 const connectDB = require("./config/db");
 
 dotenv.config();
@@ -22,7 +22,8 @@ const activityRoutes = require("./routes/activityRoutes");
 const analyticsRoutes = require("./routes/analyticsRoutes");
 const recommendationRoutes = require("./routes/recommendationRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
-
+const airQualityRoutes = require("./routes/airQualityRoutes");
+const environmentRoutes = require("./routes/environmentRoutes");
 // =========================
 // API Routes
 // =========================
@@ -32,6 +33,8 @@ app.use("/api/activities", activityRoutes);
 app.use("/api/analytics", analyticsRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/weather", weatherRoutes);
+app.use("/api/air-quality", airQualityRoutes);
+app.use("/api/environment", environmentRoutes);
 
 // =========================
 // Health Check
