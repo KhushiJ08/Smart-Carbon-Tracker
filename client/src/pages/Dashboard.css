@@ -1,7 +1,7 @@
 .dashboard {
   min-height: 100vh;
   background:
-    linear-gradient(rgba(0,0,0,0.55), rgba(0,0,0,0.55)),
+    linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.55)),
     url("https://images.unsplash.com/photo-1441974231531-c6227db76b6e");
   background-size: cover;
   background-position: center;
@@ -38,9 +38,9 @@
 }
 
 .summary-card {
-  background: rgba(15,15,15,0.60);
+  background: rgba(15, 15, 15, 0.6);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 22px;
   min-height: 210px;
@@ -48,12 +48,12 @@
   flex-direction: column;
   justify-content: center;
   text-align: center;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .summary-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 25px rgba(0,0,0,.35);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
 }
 
 .summary-card h3 {
@@ -78,9 +78,9 @@
 }
 
 .glass-card {
-  background: rgba(15,15,15,.60);
+  background: rgba(15, 15, 15, 0.6);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 18px;
   padding: 25px;
   color: white;
@@ -116,7 +116,7 @@
 .activity-section td {
   padding: 12px;
   color: white;
-  border-bottom: 1px solid rgba(255,255,255,.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .chart-box {
@@ -148,46 +148,140 @@
   color: white;
 }
 
-@media (max-width:1200px){
+@media (max-width: 1200px) {
+  .summary-section {
+    grid-template-columns: repeat(2, 1fr);
+  }
 
-.summary-section{
-grid-template-columns:repeat(2,1fr);
+  .dashboard-middle {
+    grid-template-columns: 1fr;
+  }
 }
 
-.dashboard-middle{
-grid-template-columns:1fr;
+@media (max-width: 768px) {
+  .dashboard-container {
+    padding: 100px 20px 40px;
+  }
+
+  .summary-section {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-title {
+    font-size: 38px;
+  }
+
+  .dashboard-subtitle {
+    font-size: 16px;
+  }
+
+  .summary-card {
+    min-height: 180px;
+  }
+
+  .summary-card h1 {
+    font-size: 34px;
+  }
+
+  .summary-card h3 {
+    font-size: 18px;
+  }
+}
+/* =====================================================
+   BONUS FEATURES - VISIBILITY FIX
+   ===================================================== */
+
+.environment-section {
+  margin-top: 35px;
+  margin-bottom: 35px;
+  position: relative;
+  z-index: 2;
 }
 
+.environment-title {
+  color: #ffffff !important;
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
 }
 
-@media (max-width:768px){
-
-.dashboard-container{
-padding:100px 20px 40px;
+.environment-subtitle {
+  color: #ffffff !important;
+  font-size: 16px;
+  margin-bottom: 20px;
+  text-shadow: 0 2px 5px rgba(0, 0, 0, 0.8);
 }
 
-.summary-section{
-grid-template-columns:1fr;
+.environment-subtitle strong {
+  color: #b8ff9c !important;
 }
 
-.dashboard-title{
-font-size:38px;
+.environment-error {
+  color: #ffcc66 !important;
+  font-weight: 600;
+  margin-bottom: 15px;
 }
 
-.dashboard-subtitle{
-font-size:16px;
+/* Sustainability Score */
+
+.environment-card h3 {
+  color: #ffffff !important;
 }
 
-.summary-card{
-min-height:180px;
+.environment-card p {
+  color: #ffffff !important;
 }
 
-.summary-card h1{
-font-size:34px;
+.environment-main-value {
+  color: #b8ff9c !important;
+  font-size: 32px;
+  font-weight: 700;
+  margin: 15px 0;
 }
 
-.summary-card h3{
-font-size:18px;
+/* Environmental Alerts */
+
+.recommend-section {
+  color: #ffffff !important;
+  padding: 25px;
 }
 
+.recommend-section p {
+  color: #ffffff !important;
+  font-size: 17px;
+  line-height: 1.7;
+  margin: 8px 0;
+}
+
+/* AQI Comparison */
+
+.environment-section .glass-card {
+  color: #ffffff;
+}
+
+.environment-section .glass-card h3 {
+  color: #ffffff !important;
+}
+
+.environment-section .glass-card p {
+  color: #ffffff !important;
+}
+
+/* Make bonus cards stand out */
+
+.environment-card {
+  min-height: 150px;
+}
+
+/* Better spacing */
+
+.environment-cards {
+  position: relative;
+  z-index: 2;
+}
+
+.environment-charts {
+  position: relative;
+  z-index: 2;
 }

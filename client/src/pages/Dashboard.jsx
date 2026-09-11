@@ -40,8 +40,15 @@ export default function Dashboard() {
   const [weekEmission, setWeekEmission] = useState(0);
   const [prediction, setPrediction] = useState("--");
 
+  // =====================================================
+  // ENVIRONMENTAL DATA
+  // =====================================================
+
   const [environment, setEnvironment] = useState(null);
   const [environmentHistory, setEnvironmentHistory] = useState([]);
+
+  const [city, setCity] = useState("Detecting location...");
+  const [locationError, setLocationError] = useState("");
 
   // =====================================================
   // AQI CITY COMPARISON
@@ -49,9 +56,6 @@ export default function Dashboard() {
 
   const [aqiComparison, setAqiComparison] = useState([]);
   const [comparisonLoading, setComparisonLoading] = useState(true);
-
-  const [city, setCity] = useState("Detecting location...");
-  const [locationError, setLocationError] = useState("");
 
   const goal = 15;
 
@@ -68,7 +72,7 @@ export default function Dashboard() {
     }
 
     // =====================================================
-    // CARBON ACTIVITY DATA
+    // LOAD CARBON ACTIVITY DATA
     // =====================================================
 
     const loadActivities = async () => {
@@ -157,30 +161,6 @@ export default function Dashboard() {
     loadActivities();
 
     // =====================================================
-    // LOAD AQI CITY COMPARISON
-    // =====================================================
-
-    const loadAQIComparison = async () => {
-      try {
-        setComparisonLoading(true);
-
-        const response = await axios.get(
-          `${API}/api/environment/compare-aqi?cities=Delhi,Lucknow,Mumbai`,
-        );
-
-        setAqiComparison(response.data?.cities || []);
-      } catch (error) {
-        console.log("AQI comparison error:", error);
-
-        setAqiComparison([]);
-      } finally {
-        setComparisonLoading(false);
-      }
-    };
-
-    loadAQIComparison();
-
-    // =====================================================
     // LOAD ENVIRONMENTAL DATA
     // =====================================================
 
@@ -191,7 +171,7 @@ export default function Dashboard() {
         console.log("Coordinates:", latitude, longitude);
 
         // -------------------------------------------------
-        // 1. Try existing latest data
+        // 1. TRY EXISTING DATA
         // -------------------------------------------------
 
         const latestResponse = await axios.get(
@@ -201,7 +181,7 @@ export default function Dashboard() {
         let latestData = latestResponse.data?.data;
 
         // -------------------------------------------------
-        // 2. If no data exists, use GPS coordinates
+        // 2. IF NO DATA, USE GPS COORDINATES
         // -------------------------------------------------
 
         if (!latestData) {
@@ -222,7 +202,7 @@ export default function Dashboard() {
         }
 
         // -------------------------------------------------
-        // 3. Make sure we actually received data
+        // 3. CHECK DATA
         // -------------------------------------------------
 
         if (!latestData) {
@@ -230,7 +210,7 @@ export default function Dashboard() {
         }
 
         // -------------------------------------------------
-        // 4. Save environmental data in state
+        // 4. SAVE DATA TO STATE
         // -------------------------------------------------
 
         setEnvironment(latestData);
@@ -238,7 +218,7 @@ export default function Dashboard() {
         setLocationError("");
 
         // -------------------------------------------------
-        // 5. Get weekly environmental history
+        // 5. LOAD WEEKLY HISTORY
         // -------------------------------------------------
 
         try {
@@ -258,7 +238,7 @@ export default function Dashboard() {
         console.log("Environmental error response:", error.response?.data);
 
         // -------------------------------------------------
-        // FALLBACK TO DELHI
+        // DELHI FALLBACK
         // -------------------------------------------------
 
         try {
@@ -299,7 +279,7 @@ export default function Dashboard() {
         console.log("GPS coordinates:", latitude, longitude);
 
         // -------------------------------------------------
-        // Reverse geocoding
+        // REVERSE GEOCODING
         // -------------------------------------------------
 
         const response = await axios.get(
@@ -318,7 +298,7 @@ export default function Dashboard() {
         console.log("Detected location:", location);
 
         // -------------------------------------------------
-        // Get city/locality name
+        // GET CITY NAME
         // -------------------------------------------------
 
         const detectedCity =
@@ -332,21 +312,20 @@ export default function Dashboard() {
         setCity(detectedCity);
 
         // -------------------------------------------------
-        // IMPORTANT:
-        // Send BOTH city and coordinates
+        // LOAD ENVIRONMENTAL DATA
         // -------------------------------------------------
 
         await loadEnvironmentalData(detectedCity, latitude, longitude);
       } catch (error) {
         console.log("City detection error:", error);
 
-        // -------------------------------------------------
-        // Delhi fallback
-        // -------------------------------------------------
-
         setCity("Delhi");
 
         setLocationError("Unable to detect your location. Showing Delhi data.");
+
+        // -------------------------------------------------
+        // DELHI FALLBACK
+        // -------------------------------------------------
 
         try {
           const fallbackLatest = await axios.get(
@@ -377,7 +356,6 @@ export default function Dashboard() {
         "Geolocation is not supported by your browser. Showing Delhi data.",
       );
 
-      // Delhi coordinates
       detectCity(28.6139, 77.209);
     } else {
       navigator.geolocation.getCurrentPosition(
@@ -395,7 +373,6 @@ export default function Dashboard() {
 
           setLocationError("Location permission denied. Showing Delhi data.");
 
-          // Delhi fallback
           detectCity(28.6139, 77.209);
         },
         {
@@ -405,6 +382,30 @@ export default function Dashboard() {
         },
       );
     }
+
+    // =====================================================
+    // AQI CITY COMPARISON
+    // =====================================================
+
+    const loadAQIComparison = async () => {
+      try {
+        setComparisonLoading(true);
+
+        const response = await axios.get(
+          `${API}/api/environment/compare-aqi?cities=Delhi,Lucknow,Mumbai`,
+        );
+
+        setAqiComparison(response.data?.cities || []);
+      } catch (error) {
+        console.log("AQI comparison error:", error);
+
+        setAqiComparison([]);
+      } finally {
+        setComparisonLoading(false);
+      }
+    };
+
+    loadAQIComparison();
   }, []);
 
   // =====================================================
@@ -437,6 +438,149 @@ export default function Dashboard() {
     }
 
     return "Hazardous";
+  };
+
+  // =====================================================
+  // SUSTAINABILITY SCORE
+  // =====================================================
+
+  const calculateSustainabilityScore = () => {
+    if (!environment) {
+      return null;
+    }
+
+    const aqi = Number(environment.AQI);
+    const temperature = Number(environment.temperature);
+    const humidity = Number(environment.humidity);
+
+    // -------------------------------------------------
+    // AQI SCORE
+    // -------------------------------------------------
+
+    let aqiScore;
+
+    if (aqi <= 50) {
+      aqiScore = 100;
+    } else if (aqi <= 100) {
+      aqiScore = 80;
+    } else if (aqi <= 150) {
+      aqiScore = 60;
+    } else if (aqi <= 200) {
+      aqiScore = 40;
+    } else if (aqi <= 300) {
+      aqiScore = 20;
+    } else {
+      aqiScore = 5;
+    }
+
+    // -------------------------------------------------
+    // WEATHER SCORE
+    // -------------------------------------------------
+
+    let weatherScore;
+
+    if (temperature >= 18 && temperature <= 30) {
+      weatherScore = 100;
+    } else if (temperature >= 15 && temperature <= 34) {
+      weatherScore = 75;
+    } else if (temperature >= 10 && temperature <= 38) {
+      weatherScore = 50;
+    } else {
+      weatherScore = 25;
+    }
+
+    // -------------------------------------------------
+    // HUMIDITY SCORE
+    // -------------------------------------------------
+
+    let humidityScore;
+
+    if (humidity >= 40 && humidity <= 70) {
+      humidityScore = 100;
+    } else if (humidity >= 30 && humidity <= 80) {
+      humidityScore = 70;
+    } else {
+      humidityScore = 40;
+    }
+
+    // -------------------------------------------------
+    // FINAL SCORE
+    // -------------------------------------------------
+
+    const score = Math.round(
+      aqiScore * 0.5 + weatherScore * 0.3 + humidityScore * 0.2,
+    );
+
+    return Math.max(0, Math.min(100, score));
+  };
+
+  const sustainabilityScore = calculateSustainabilityScore();
+
+  // =====================================================
+  // ENVIRONMENTAL RECOMMENDATIONS
+  // =====================================================
+
+  const getEnvironmentalRecommendation = () => {
+    if (!environment) {
+      return [
+        "Environmental recommendations will appear when environmental data is available.",
+      ];
+    }
+
+    const aqi = Number(environment.AQI);
+    const temperature = Number(environment.temperature);
+
+    const recommendations = [];
+
+    // -------------------------------------------------
+    // AQI RECOMMENDATION
+    // -------------------------------------------------
+
+    if (aqi > 150) {
+      recommendations.push(
+        "⚠️ Today's AQI is poor. Consider using public transport instead of private vehicles.",
+      );
+    } else if (aqi > 100) {
+      recommendations.push(
+        "😷 Air quality is unhealthy for sensitive groups. Consider reducing prolonged outdoor activity.",
+      );
+    } else if (aqi <= 50) {
+      recommendations.push(
+        "🌿 Air quality is good. Outdoor activities and walking are recommended.",
+      );
+    } else {
+      recommendations.push(
+        "🌱 Air quality is moderate. Consider sustainable transportation where possible.",
+      );
+    }
+
+    // -------------------------------------------------
+    // WEATHER RECOMMENDATION
+    // -------------------------------------------------
+
+    if (temperature >= 18 && temperature <= 30 && aqi <= 100) {
+      recommendations.push(
+        "🚶 The weather is pleasant. Walking or cycling is recommended.",
+      );
+    } else if (temperature > 35) {
+      recommendations.push(
+        "☀️ Temperature is high. Stay hydrated and avoid strenuous outdoor activity.",
+      );
+    } else if (temperature < 15) {
+      recommendations.push(
+        "🧥 Temperature is relatively low. Plan outdoor activities accordingly.",
+      );
+    }
+
+    // -------------------------------------------------
+    // GENERAL SUSTAINABILITY TIP
+    // -------------------------------------------------
+
+    recommendations.push(
+      "♻️ Continue reducing unnecessary energy use and choosing low-carbon transportation.",
+    );
+
+    return recommendations;
   };
 
   // =====================================================
@@ -767,6 +911,71 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* =================================================
+              SUSTAINABILITY SCORE
+          ================================================= */}
+
+          <div className="environment-section">
+            <h2 className="environment-title">🌱 Sustainability Score</h2>
+
+            <p className="environment-subtitle">
+              A combined score based on AQI and local weather conditions.
+            </p>
+
+            <div className="environment-cards">
+              <div className="glass-card environment-card">
+                <h3>🌍 Environmental Sustainability</h3>
+
+                {sustainabilityScore !== null ? (
+                  <>
+                    <div className="environment-main-value">
+                      {sustainabilityScore}
+                      /100
+                    </div>
+
+                    <p>
+                      <strong>Rating:</strong>{" "}
+                      {sustainabilityScore >= 80
+                        ? "Excellent"
+                        : sustainabilityScore >= 60
+                          ? "Good"
+                          : sustainabilityScore >= 40
+                            ? "Moderate"
+                            : "Needs Improvement"}
+                    </p>
+
+                    <p>
+                      📍 Location: <strong>{city}</strong>
+                    </p>
+                  </>
+                ) : (
+                  <p>Loading sustainability score...</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* =================================================
+              ENVIRONMENTAL ALERTS
+          ================================================= */}
+
+          <div className="environment-section">
+            <h2 className="environment-title">
+              🚨 Environmental Alerts & Recommendations
+            </h2>
+
+            <p className="environment-subtitle">
+              Personalized suggestions based on current environmental
+              conditions.
+            </p>
+
+            <div className="glass-card recommend-section">
+              {getEnvironmentalRecommendation().map((recommendation, index) => (
+                <p key={index}>{recommendation}</p>
+              ))}
             </div>
           </div>
 
