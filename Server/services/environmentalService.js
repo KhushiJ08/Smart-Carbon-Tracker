@@ -5,6 +5,13 @@ const EnvironmentalData = require("../models/EnvironmentalData");
 const { getAQIData, getAQIDataByCoordinates } = require("./airQualityService");
 
 // ======================================================
+// CACHE SETTINGS
+// ======================================================
+
+// Keep API data for 15 minutes
+const CACHE_DURATION = 15 * 60 * 1000;
+
+// ======================================================
 // Convert Open-Meteo weather code into readable text
 // ======================================================
 
@@ -29,13 +36,74 @@ const getWeatherCondition = (weatherCode) => {
 };
 
 // ======================================================
+// Check whether recent cached data exists
+// ======================================================
+
+const getCachedEnvironmentalData = async (city) => {
+  if (!city) {
+    return null;
+  }
+
+  const latestData = await EnvironmentalData.findOne({
+    city: city,
+  }).sort({
+    timestamp: -1,
+  });
+
+  if (!latestData) {
+    return null;
+  }
+
+  const age = Date.now() - new Date(latestData.timestamp).getTime();
+
+  if (age <= CACHE_DURATION) {
+    console.log(`Using cached environmental data for ${city}`);
+
+    return latestData;
+  }
+
+  return null;
+};
+
+// ======================================================
+// Get last saved data
+// Used as fallback if API temporarily fails
+// ======================================================
+
+const getLastSavedEnvironmentalData = async (city) => {
+  if (!city) {
+    return null;
+  }
+
+  const latestData = await EnvironmentalData.findOne({
+    city: city,
+  }).sort({
+    timestamp: -1,
+  });
+
+  return latestData;
+};
+
+// ======================================================
 // Existing city-based update
-// Keeps the old functionality working
 // ======================================================
 
 const updateEnvironmentalData = async (city) => {
   try {
+    // ==================================================
+    // 0. Check 15-minute cache
+    // ==================================================
+
+    const cachedData = await getCachedEnvironmentalData(city);
+
+    if (cachedData) {
+      return cachedData;
+    }
+
+    // ==================================================
     // 1. Find city coordinates
+    // ==================================================
+
     const geoResponse = await axios.get(
       "https://geocoding-api.open-meteo.com/v1/search",
       {
@@ -54,7 +122,10 @@ const updateEnvironmentalData = async (city) => {
 
     const location = geoResponse.data.results[0];
 
+    // ==================================================
     // 2. Get weather
+    // ==================================================
+
     const weatherResponse = await axios.get(
       "https://api.open-meteo.com/v1/forecast",
       {
@@ -70,13 +141,41 @@ const updateEnvironmentalData = async (city) => {
 
     const weather = weatherResponse.data.current;
 
+    // ==================================================
     // 3. Get AQI
-    const airQuality = await getAQIData(city);
+    // ==================================================
 
+    let airQuality;
+
+    try {
+      airQuality = await getAQIData(city);
+    } catch (aqiError) {
+      console.error("AQI API error:", aqiError.message);
+
+      // Try using previously saved data
+      const lastSavedData = await getLastSavedEnvironmentalData(city);
+
+      if (lastSavedData) {
+        console.log(
+          `Using last saved AQI data for ${city} because AQI API failed`,
+        );
+
+        return lastSavedData;
+      }
+
+      throw aqiError;
+    }
+
+    // ==================================================
     // 4. Convert weather code
+    // ==================================================
+
     const weatherCondition = getWeatherCondition(weather.weather_code);
 
+    // ==================================================
     // 5. Save data
+    // ==================================================
+
     const environmentalData = await EnvironmentalData.create({
       city: location.name,
       temperature: weather.temperature_2m,
@@ -87,6 +186,8 @@ const updateEnvironmentalData = async (city) => {
       weather: weatherCondition,
       timestamp: new Date(),
     });
+
+    console.log(`Environmental data saved for ${location.name}`);
 
     return environmentalData;
   } catch (error) {
@@ -101,7 +202,7 @@ const updateEnvironmentalData = async (city) => {
 };
 
 // ======================================================
-// NEW: Update environmental data using GPS coordinates
+// GPS / COORDINATE BASED UPDATE
 // ======================================================
 
 const updateEnvironmentalDataByCoordinates = async (
@@ -110,7 +211,10 @@ const updateEnvironmentalDataByCoordinates = async (
   longitude,
 ) => {
   try {
+    // ==================================================
     // Validate coordinates
+    // ==================================================
+
     if (typeof latitude !== "number" || typeof longitude !== "number") {
       throw new Error("Valid latitude and longitude are required");
     }
@@ -121,6 +225,22 @@ const updateEnvironmentalDataByCoordinates = async (
 
     if (longitude < -180 || longitude > 180) {
       throw new Error("Invalid longitude");
+    }
+
+    const detectedCity = city || "Current Location";
+
+    // ==================================================
+    // 0. Check 15-minute cache
+    // ==================================================
+
+    const cachedData = await getCachedEnvironmentalData(detectedCity);
+
+    if (cachedData) {
+      console.log(
+        `Returning cached GPS environmental data for ${detectedCity}`,
+      );
+
+      return cachedData;
     }
 
     // ==================================================
@@ -146,7 +266,32 @@ const updateEnvironmentalDataByCoordinates = async (
     // 2. Get AQI directly from GPS coordinates
     // ==================================================
 
-    const airQuality = await getAQIDataByCoordinates(latitude, longitude, city);
+    let airQuality;
+
+    try {
+      airQuality = await getAQIDataByCoordinates(
+        latitude,
+        longitude,
+        detectedCity,
+      );
+    } catch (aqiError) {
+      console.error("GPS AQI API error:", aqiError.message);
+
+      // ==================================================
+      // If AQI API fails, use previous saved data
+      // ==================================================
+
+      const lastSavedData = await getLastSavedEnvironmentalData(detectedCity);
+
+      if (lastSavedData) {
+        console.log(`Using last saved GPS AQI data for ${detectedCity}`);
+
+        return lastSavedData;
+      }
+
+      // No previous data exists
+      throw aqiError;
+    }
 
     // ==================================================
     // 3. Convert weather code
@@ -159,7 +304,7 @@ const updateEnvironmentalDataByCoordinates = async (
     // ==================================================
 
     const environmentalData = await EnvironmentalData.create({
-      city: city || "Current Location",
+      city: detectedCity,
       temperature: weather.temperature_2m,
       humidity: weather.relative_humidity_2m,
       AQI: airQuality.AQI,
@@ -169,8 +314,12 @@ const updateEnvironmentalDataByCoordinates = async (
       timestamp: new Date(),
     });
 
+    // ==================================================
+    // 5. Log successful GPS update
+    // ==================================================
+
     console.log(
-      `Environmental data saved for ${city} (${latitude}, ${longitude})`,
+      `Environmental data saved for ${detectedCity} (${latitude}, ${longitude})`,
     );
 
     return environmentalData;
@@ -184,6 +333,10 @@ const updateEnvironmentalDataByCoordinates = async (
     );
   }
 };
+
+// ======================================================
+// EXPORTS
+// ======================================================
 
 module.exports = {
   updateEnvironmentalData,
