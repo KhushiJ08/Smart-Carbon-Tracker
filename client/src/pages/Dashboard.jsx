@@ -43,7 +43,14 @@ export default function Dashboard() {
   const [environment, setEnvironment] = useState(null);
   const [environmentHistory, setEnvironmentHistory] = useState([]);
 
+  const [city, setCity] = useState("Detecting location...");
+  const [locationError, setLocationError] = useState("");
+
   const goal = 15;
+
+  // =====================================================
+  // MAIN EFFECT
+  // =====================================================
 
   useEffect(() => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -57,16 +64,21 @@ export default function Dashboard() {
     // CARBON ACTIVITY DATA
     // =====================================================
 
-    axios
-      .get(`${API}/api/activities/${user._id}`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      })
-      .then((res) => {
-        const data = res.data || [];
+    const loadActivities = async () => {
+      try {
+        const response = await axios.get(`${API}/api/activities/${user._id}`, {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+
+        const data = response.data || [];
 
         setActivities(data);
+
+        // -------------------------------------------------
+        // TOTAL WEEKLY EMISSION
+        // -------------------------------------------------
 
         const total = data.reduce(
           (sum, item) => sum + Number(item.emission || 0),
@@ -75,15 +87,19 @@ export default function Dashboard() {
 
         setWeekEmission(total);
 
+        // -------------------------------------------------
+        // TODAY'S EMISSION
+        // -------------------------------------------------
+
         if (data.length > 0) {
           setTodayEmission(Number(data[0].emission || 0));
         } else {
           setTodayEmission(0);
         }
 
-        // -----------------------------
-        // Prediction data
-        // -----------------------------
+        // =================================================
+        // AI PREDICTION
+        // =================================================
 
         const transport = data
           .filter(
@@ -105,52 +121,259 @@ export default function Dashboard() {
           )
           .reduce((sum, item) => sum + Number(item.emission || 0), 0);
 
-        axios
-          .post(`${API}/api/carbon/predict`, {
-            transport,
-            electricity,
-            fuel,
-          })
-          .then((response) => {
-            const predicted = response.data?.prediction?.predicted_emission;
+        try {
+          const predictionResponse = await axios.post(
+            `${API}/api/carbon/predict`,
+            {
+              transport,
+              electricity,
+              fuel,
+            },
+          );
 
-            if (predicted !== undefined) {
-              setPrediction(Number(predicted).toFixed(2));
-            }
-          })
-          .catch(() => {
-            setPrediction("--");
-          });
-      })
-      .catch((err) => {
-        console.log("Activity data error:", err);
-      });
+          const predicted =
+            predictionResponse.data?.prediction?.predicted_emission;
 
-    // =====================================================
-    // LATEST ENVIRONMENTAL DATA
-    // =====================================================
+          if (predicted !== undefined) {
+            setPrediction(Number(predicted).toFixed(2));
+          }
+        } catch (error) {
+          console.log("Prediction error:", error);
 
-    axios
-      .get(`${API}/api/environment/latest/Delhi`)
-      .then((res) => {
-        setEnvironment(res.data?.data || null);
-      })
-      .catch((err) => {
-        console.log("Environmental data error:", err);
-      });
+          setPrediction("--");
+        }
+      } catch (error) {
+        console.log("Activity data error:", error);
+      }
+    };
+
+    loadActivities();
 
     // =====================================================
-    // ENVIRONMENTAL HISTORY
+    // LOAD ENVIRONMENTAL DATA
     // =====================================================
 
-    axios
-      .get(`${API}/api/environment/weekly/Delhi`)
-      .then((res) => {
-        setEnvironmentHistory(res.data?.data || []);
-      })
-      .catch((err) => {
-        console.log("Environmental history error:", err);
-      });
+    const loadEnvironmentalData = async (detectedCity, latitude, longitude) => {
+      try {
+        console.log("Loading environmental data for:", detectedCity);
+
+        console.log("Coordinates:", latitude, longitude);
+
+        // -------------------------------------------------
+        // 1. Try existing latest data
+        // -------------------------------------------------
+
+        const latestResponse = await axios.get(
+          `${API}/api/environment/latest/${encodeURIComponent(detectedCity)}`,
+        );
+
+        let latestData = latestResponse.data?.data;
+
+        // -------------------------------------------------
+        // 2. If no data exists, use GPS coordinates
+        // -------------------------------------------------
+
+        if (!latestData) {
+          console.log("No existing environmental data found.");
+
+          console.log("Requesting fresh data using GPS coordinates...");
+
+          const updateResponse = await axios.post(
+            `${API}/api/environment/update-by-location`,
+            {
+              city: detectedCity,
+              latitude: Number(latitude),
+              longitude: Number(longitude),
+            },
+          );
+
+          latestData = updateResponse.data?.data;
+        }
+
+        // -------------------------------------------------
+        // 3. Make sure we actually received data
+        // -------------------------------------------------
+
+        if (!latestData) {
+          throw new Error("Environmental data was not returned by the server.");
+        }
+
+        // -------------------------------------------------
+        // 4. Save environmental data in state
+        // -------------------------------------------------
+
+        setEnvironment(latestData);
+
+        setLocationError("");
+
+        // -------------------------------------------------
+        // 5. Get weekly environmental history
+        // -------------------------------------------------
+
+        try {
+          const weeklyResponse = await axios.get(
+            `${API}/api/environment/weekly/${encodeURIComponent(detectedCity)}`,
+          );
+
+          setEnvironmentHistory(weeklyResponse.data?.data || []);
+        } catch (weeklyError) {
+          console.log("Weekly environmental data error:", weeklyError);
+
+          setEnvironmentHistory([]);
+        }
+      } catch (error) {
+        console.log("Environmental data error:", error);
+
+        console.log("Environmental error response:", error.response?.data);
+
+        // -------------------------------------------------
+        // FALLBACK TO DELHI
+        // -------------------------------------------------
+
+        try {
+          const fallbackLatest = await axios.get(
+            `${API}/api/environment/latest/Delhi`,
+          );
+
+          const fallbackWeekly = await axios.get(
+            `${API}/api/environment/weekly/Delhi`,
+          );
+
+          setEnvironment(fallbackLatest.data?.data || null);
+
+          setEnvironmentHistory(fallbackWeekly.data?.data || []);
+
+          setCity("Delhi");
+
+          setLocationError(
+            `Environmental data could not be loaded for ${detectedCity}. Showing Delhi data.`,
+          );
+        } catch (fallbackError) {
+          console.log("Delhi fallback error:", fallbackError);
+
+          setEnvironment(null);
+          setEnvironmentHistory([]);
+
+          setLocationError("Environmental data could not be loaded.");
+        }
+      }
+    };
+
+    // =====================================================
+    // AUTOMATIC LOCATION DETECTION
+    // =====================================================
+
+    const detectCity = async (latitude, longitude) => {
+      try {
+        console.log("GPS coordinates:", latitude, longitude);
+
+        // -------------------------------------------------
+        // Reverse geocoding
+        // -------------------------------------------------
+
+        const response = await axios.get(
+          "https://api.bigdatacloud.net/data/reverse-geocode-client",
+          {
+            params: {
+              latitude,
+              longitude,
+              localityLanguage: "en",
+            },
+          },
+        );
+
+        const location = response.data;
+
+        console.log("Detected location:", location);
+
+        // -------------------------------------------------
+        // Get city/locality name
+        // -------------------------------------------------
+
+        const detectedCity =
+          location.city ||
+          location.locality ||
+          location.principalSubdivision ||
+          "Delhi";
+
+        console.log("Detected city:", detectedCity);
+
+        setCity(detectedCity);
+
+        // -------------------------------------------------
+        // IMPORTANT:
+        // Send BOTH city and coordinates
+        // -------------------------------------------------
+
+        await loadEnvironmentalData(detectedCity, latitude, longitude);
+      } catch (error) {
+        console.log("City detection error:", error);
+
+        // -------------------------------------------------
+        // Delhi fallback
+        // -------------------------------------------------
+
+        setCity("Delhi");
+
+        setLocationError("Unable to detect your location. Showing Delhi data.");
+
+        try {
+          const fallbackLatest = await axios.get(
+            `${API}/api/environment/latest/Delhi`,
+          );
+
+          const fallbackWeekly = await axios.get(
+            `${API}/api/environment/weekly/Delhi`,
+          );
+
+          setEnvironment(fallbackLatest.data?.data || null);
+
+          setEnvironmentHistory(fallbackWeekly.data?.data || []);
+        } catch (fallbackError) {
+          console.log("Fallback environmental error:", fallbackError);
+        }
+      }
+    };
+
+    // =====================================================
+    // REQUEST USER LOCATION
+    // =====================================================
+
+    if (!navigator.geolocation) {
+      console.log("Geolocation is not supported.");
+
+      setLocationError(
+        "Geolocation is not supported by your browser. Showing Delhi data.",
+      );
+
+      // Delhi coordinates
+      detectCity(28.6139, 77.209);
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const latitude = position.coords.latitude;
+
+          const longitude = position.coords.longitude;
+
+          console.log("Browser GPS location:", latitude, longitude);
+
+          detectCity(latitude, longitude);
+        },
+        (error) => {
+          console.log("Location permission error:", error);
+
+          setLocationError("Location permission denied. Showing Delhi data.");
+
+          // Delhi fallback
+          detectCity(28.6139, 77.209);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 300000,
+        },
+      );
+    }
   }, []);
 
   // =====================================================
@@ -162,11 +385,25 @@ export default function Dashboard() {
       return "Unknown";
     }
 
-    if (aqi <= 50) return "Good";
-    if (aqi <= 100) return "Moderate";
-    if (aqi <= 150) return "Unhealthy for Sensitive Groups";
-    if (aqi <= 200) return "Poor";
-    if (aqi <= 300) return "Very Poor";
+    if (aqi <= 50) {
+      return "Good";
+    }
+
+    if (aqi <= 100) {
+      return "Moderate";
+    }
+
+    if (aqi <= 150) {
+      return "Unhealthy for Sensitive Groups";
+    }
+
+    if (aqi <= 200) {
+      return "Poor";
+    }
+
+    if (aqi <= 300) {
+      return "Very Poor";
+    }
 
     return "Hazardous";
   };
@@ -188,13 +425,19 @@ export default function Dashboard() {
 
   const temperatureData = {
     labels: chartLabels,
+
     datasets: [
       {
         label: "Temperature (°C)",
+
         data: environmentHistory.map((item) => Number(item.temperature)),
+
         tension: 0.3,
+
         borderWidth: 3,
+
         pointRadius: 5,
+
         pointHoverRadius: 7,
       },
     ],
@@ -206,13 +449,19 @@ export default function Dashboard() {
 
   const humidityData = {
     labels: chartLabels,
+
     datasets: [
       {
         label: "Humidity (%)",
+
         data: environmentHistory.map((item) => Number(item.humidity)),
+
         tension: 0.3,
+
         borderWidth: 3,
+
         pointRadius: 5,
+
         pointHoverRadius: 7,
       },
     ],
@@ -224,13 +473,19 @@ export default function Dashboard() {
 
   const aqiData = {
     labels: chartLabels,
+
     datasets: [
       {
         label: "AQI",
+
         data: environmentHistory.map((item) => Number(item.AQI)),
+
         tension: 0.3,
+
         borderWidth: 3,
+
         pointRadius: 5,
+
         pointHoverRadius: 7,
       },
     ],
@@ -242,6 +497,7 @@ export default function Dashboard() {
 
   const chartOptions = {
     responsive: true,
+
     maintainAspectRatio: false,
 
     interaction: {
@@ -252,7 +508,9 @@ export default function Dashboard() {
     plugins: {
       legend: {
         display: true,
+
         position: "top",
+
         labels: {
           font: {
             size: 14,
@@ -269,7 +527,9 @@ export default function Dashboard() {
       x: {
         ticks: {
           autoSkip: false,
+
           maxRotation: 0,
+
           font: {
             size: 12,
           },
@@ -360,8 +620,13 @@ export default function Dashboard() {
             <h2 className="environment-title">Environmental Monitoring</h2>
 
             <p className="environment-subtitle">
-              Real-time weather and air quality conditions for Delhi.
+              📍 Real-time weather and air quality conditions for{" "}
+              <strong>{city}</strong>.
             </p>
+
+            {locationError && (
+              <p className="environment-error">{locationError}</p>
+            )}
 
             {/* =================================================
                 WEATHER + AIR QUALITY

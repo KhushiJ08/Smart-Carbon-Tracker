@@ -2,9 +2,16 @@ const express = require("express");
 const router = express.Router();
 
 const EnvironmentalData = require("../models/EnvironmentalData");
-const { updateEnvironmentalData } = require("../services/environmentalService");
 
-// Update environmental data
+const {
+  updateEnvironmentalData,
+  updateEnvironmentalDataByCoordinates,
+} = require("../services/environmentalService");
+
+// ======================================================
+// Update environmental data using city name
+// ======================================================
+
 router.get("/update/:city", async (req, res) => {
   try {
     const data = await updateEnvironmentalData(req.params.city);
@@ -22,7 +29,39 @@ router.get("/update/:city", async (req, res) => {
   }
 });
 
+// ======================================================
+// NEW: Update environmental data using GPS coordinates
+// ======================================================
+
+router.post("/update-by-location", async (req, res) => {
+  try {
+    const { city, latitude, longitude } = req.body;
+
+    const data = await updateEnvironmentalDataByCoordinates(
+      city,
+      Number(latitude),
+      Number(longitude),
+    );
+
+    res.json({
+      success: true,
+      message: "Environmental data for current location saved successfully",
+      data,
+    });
+  } catch (error) {
+    console.error("Location environmental route error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+});
+
+// ======================================================
 // Latest environmental data
+// ======================================================
+
 router.get("/latest/:city", async (req, res) => {
   try {
     const data = await EnvironmentalData.findOne({
@@ -41,15 +80,21 @@ router.get("/latest/:city", async (req, res) => {
   }
 });
 
+// ======================================================
 // Weekly environmental data
+// ======================================================
+
 router.get("/weekly/:city", async (req, res) => {
   try {
     const sevenDaysAgo = new Date();
+
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const data = await EnvironmentalData.find({
       city: req.params.city,
-      timestamp: { $gte: sevenDaysAgo },
+      timestamp: {
+        $gte: sevenDaysAgo,
+      },
     }).sort({ timestamp: 1 });
 
     res.json({
@@ -64,15 +109,22 @@ router.get("/weekly/:city", async (req, res) => {
     });
   }
 });
+
+// ======================================================
 // Monthly environmental data
+// ======================================================
+
 router.get("/monthly/:city", async (req, res) => {
   try {
     const thirtyDaysAgo = new Date();
+
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const data = await EnvironmentalData.find({
       city: req.params.city,
-      timestamp: { $gte: thirtyDaysAgo },
+      timestamp: {
+        $gte: thirtyDaysAgo,
+      },
     }).sort({ timestamp: 1 });
 
     res.json({
@@ -87,8 +139,11 @@ router.get("/monthly/:city", async (req, res) => {
     });
   }
 });
+
+// ======================================================
 // Environmental trend
-// Environmental trend
+// ======================================================
+
 router.get("/trend-data/:city", async (req, res) => {
   try {
     const data = await EnvironmentalData.find({
@@ -114,9 +169,13 @@ router.get("/trend-data/:city", async (req, res) => {
 
     const trend = {
       city: req.params.city,
+
       averageTemperature: Number((totalTemperature / data.length).toFixed(2)),
+
       averageHumidity: Number((totalHumidity / data.length).toFixed(2)),
+
       averageAQI: Number((totalAQI / data.length).toFixed(2)),
+
       records: data.length,
     };
 
@@ -131,4 +190,5 @@ router.get("/trend-data/:city", async (req, res) => {
     });
   }
 });
+
 module.exports = router;
