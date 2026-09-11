@@ -190,5 +190,99 @@ router.get("/trend-data/:city", async (req, res) => {
     });
   }
 });
+// ======================================================
+// AQI COMPARISON BETWEEN MULTIPLE CITIES
+// ======================================================
+
+router.get("/compare-aqi", async (req, res) => {
+  try {
+    const citiesParam = req.query.cities;
+
+    if (!citiesParam) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide cities to compare",
+      });
+    }
+
+    const cities = citiesParam
+      .split(",")
+      .map((city) => city.trim())
+      .filter((city) => city.length > 0);
+
+    if (cities.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide at least two cities",
+      });
+    }
+
+    const results = await EnvironmentalData.find({
+      city: {
+        $in: cities,
+      },
+    }).sort({
+      timestamp: -1,
+    });
+
+    // Keep only the latest record for each city
+    const latestByCity = {};
+
+    results.forEach((item) => {
+      if (!latestByCity[item.city]) {
+        latestByCity[item.city] = item;
+      }
+    });
+
+    const comparison = cities.map((city) => {
+      const data = latestByCity[city];
+
+      if (!data) {
+        return {
+          city,
+          available: false,
+          AQI: null,
+          PM25: null,
+          PM10: null,
+          temperature: null,
+          humidity: null,
+          weather: null,
+        };
+      }
+
+      return {
+        city: data.city,
+        available: true,
+        AQI: data.AQI,
+        PM25: data.PM25,
+        PM10: data.PM10,
+        temperature: data.temperature,
+        humidity: data.humidity,
+        weather: data.weather,
+        timestamp: data.timestamp,
+      };
+    });
+
+    // Sort cities with available AQI from lowest to highest
+    comparison.sort((a, b) => {
+      if (!a.available) return 1;
+      if (!b.available) return -1;
+
+      return a.AQI - b.AQI;
+    });
+
+    res.json({
+      success: true,
+      cities: comparison,
+    });
+  } catch (error) {
+    console.error("AQI comparison error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to compare AQI",
+    });
+  }
+});
 
 module.exports = router;
