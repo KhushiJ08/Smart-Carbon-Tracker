@@ -22,6 +22,8 @@ router.get("/update/:city", async (req, res) => {
       data,
     });
   } catch (error) {
+    console.error("Environmental update route error:", error.message);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -30,7 +32,7 @@ router.get("/update/:city", async (req, res) => {
 });
 
 // ======================================================
-// NEW: Update environmental data using GPS coordinates
+// Update environmental data using GPS coordinates
 // ======================================================
 
 router.post("/update-by-location", async (req, res) => {
@@ -66,7 +68,9 @@ router.get("/latest/:city", async (req, res) => {
   try {
     const data = await EnvironmentalData.findOne({
       city: req.params.city,
-    }).sort({ timestamp: -1 });
+    }).sort({
+      timestamp: -1,
+    });
 
     res.json({
       success: true,
@@ -95,7 +99,9 @@ router.get("/weekly/:city", async (req, res) => {
       timestamp: {
         $gte: sevenDaysAgo,
       },
-    }).sort({ timestamp: 1 });
+    }).sort({
+      timestamp: 1,
+    });
 
     res.json({
       success: true,
@@ -125,7 +131,9 @@ router.get("/monthly/:city", async (req, res) => {
       timestamp: {
         $gte: thirtyDaysAgo,
       },
-    }).sort({ timestamp: 1 });
+    }).sort({
+      timestamp: 1,
+    });
 
     res.json({
       success: true,
@@ -159,13 +167,16 @@ router.get("/trend-data/:city", async (req, res) => {
     }
 
     const totalTemperature = data.reduce(
-      (sum, item) => sum + item.temperature,
+      (sum, item) => sum + Number(item.temperature || 0),
       0,
     );
 
-    const totalHumidity = data.reduce((sum, item) => sum + item.humidity, 0);
+    const totalHumidity = data.reduce(
+      (sum, item) => sum + Number(item.humidity || 0),
+      0,
+    );
 
-    const totalAQI = data.reduce((sum, item) => sum + item.AQI, 0);
+    const totalAQI = data.reduce((sum, item) => sum + Number(item.AQI || 0), 0);
 
     const trend = {
       city: req.params.city,
@@ -190,6 +201,7 @@ router.get("/trend-data/:city", async (req, res) => {
     });
   }
 });
+
 // ======================================================
 // AQI COMPARISON BETWEEN MULTIPLE CITIES
 // ======================================================
@@ -198,6 +210,10 @@ router.get("/compare-aqi", async (req, res) => {
   try {
     const citiesParam = req.query.cities;
 
+    // --------------------------------------------------
+    // Check cities parameter
+    // --------------------------------------------------
+
     if (!citiesParam) {
       return res.status(400).json({
         success: false,
@@ -205,10 +221,21 @@ router.get("/compare-aqi", async (req, res) => {
       });
     }
 
+    // --------------------------------------------------
+    // Convert comma-separated cities into an array
+    //
+    // Example:
+    // ?cities=Delhi,Lucknow,Mumbai
+    // --------------------------------------------------
+
     const cities = citiesParam
       .split(",")
       .map((city) => city.trim())
       .filter((city) => city.length > 0);
+
+    // --------------------------------------------------
+    // At least two cities are required
+    // --------------------------------------------------
 
     if (cities.length < 2) {
       return res.status(400).json({
@@ -217,15 +244,38 @@ router.get("/compare-aqi", async (req, res) => {
       });
     }
 
+    // --------------------------------------------------
+    // Remove duplicate cities
+    // --------------------------------------------------
+
+    const uniqueCities = [];
+
+    cities.forEach((city) => {
+      const alreadyExists = uniqueCities.some(
+        (existingCity) => existingCity.toLowerCase() === city.toLowerCase(),
+      );
+
+      if (!alreadyExists) {
+        uniqueCities.push(city);
+      }
+    });
+
+    // --------------------------------------------------
+    // Find existing environmental data
+    // --------------------------------------------------
+
     const results = await EnvironmentalData.find({
       city: {
-        $in: cities,
+        $in: uniqueCities,
       },
     }).sort({
       timestamp: -1,
     });
 
-    // Keep only the latest record for each city
+    // --------------------------------------------------
+    // Keep only latest record for each city
+    // --------------------------------------------------
+
     const latestByCity = {};
 
     results.forEach((item) => {
@@ -234,8 +284,74 @@ router.get("/compare-aqi", async (req, res) => {
       }
     });
 
-    const comparison = cities.map((city) => {
+    // --------------------------------------------------
+    // Check every requested city
+    // --------------------------------------------------
+
+    for (const city of uniqueCities) {
+      const existingData = latestByCity[city];
+
+      // ------------------------------------------------
+      // If data exists, check its age
+      // ------------------------------------------------
+
+      if (existingData) {
+        const timestamp = new Date(existingData.timestamp).getTime();
+
+        const age = Date.now() - timestamp;
+
+        // One hour
+        const oneHour = 60 * 60 * 1000;
+
+        // ------------------------------------------------
+        // Use cached data if it is less than one hour old
+        // ------------------------------------------------
+
+        if (age < oneHour) {
+          console.log(`Using cached AQI data for ${city}`);
+
+          continue;
+        }
+      }
+
+      // ------------------------------------------------
+      // City has no data OR old data
+      //
+      // Try to fetch fresh data
+      // ------------------------------------------------
+
+      try {
+        console.log(`Fetching fresh environmental data for ${city}`);
+
+        const freshData = await updateEnvironmentalData(city);
+
+        latestByCity[city] = freshData;
+
+        console.log(`Environmental data updated for ${city}`);
+      } catch (error) {
+        console.error(`Unable to update ${city}:`, error.message);
+
+        // ------------------------------------------------
+        // If fresh API request fails but old data exists,
+        // keep the old database value.
+        // ------------------------------------------------
+
+        if (!existingData) {
+          latestByCity[city] = null;
+        }
+      }
+    }
+
+    // --------------------------------------------------
+    // Build final comparison response
+    // --------------------------------------------------
+
+    const comparison = uniqueCities.map((city) => {
       const data = latestByCity[city];
+
+      // ------------------------------------------------
+      // No data available
+      // ------------------------------------------------
 
       if (!data) {
         return {
@@ -250,6 +366,10 @@ router.get("/compare-aqi", async (req, res) => {
         };
       }
 
+      // ------------------------------------------------
+      // Data available
+      // ------------------------------------------------
+
       return {
         city: data.city,
         available: true,
@@ -263,13 +383,34 @@ router.get("/compare-aqi", async (req, res) => {
       };
     });
 
-    // Sort cities with available AQI from lowest to highest
-    comparison.sort((a, b) => {
-      if (!a.available) return 1;
-      if (!b.available) return -1;
+    // --------------------------------------------------
+    // Sort available cities by AQI
+    //
+    // Lower AQI = better air quality
+    // --------------------------------------------------
 
+    comparison.sort((a, b) => {
+      // Both unavailable
+      if (!a.available && !b.available) {
+        return 0;
+      }
+
+      // Put unavailable cities at the bottom
+      if (!a.available) {
+        return 1;
+      }
+
+      if (!b.available) {
+        return -1;
+      }
+
+      // Lowest AQI first
       return a.AQI - b.AQI;
     });
+
+    // --------------------------------------------------
+    // Send response
+    // --------------------------------------------------
 
     res.json({
       success: true,
@@ -284,5 +425,9 @@ router.get("/compare-aqi", async (req, res) => {
     });
   }
 });
+
+// ======================================================
+// EXPORT ROUTER
+// ======================================================
 
 module.exports = router;

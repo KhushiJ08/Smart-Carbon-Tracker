@@ -43,6 +43,13 @@ export default function Dashboard() {
   const [environment, setEnvironment] = useState(null);
   const [environmentHistory, setEnvironmentHistory] = useState([]);
 
+  // =====================================================
+  // AQI CITY COMPARISON
+  // =====================================================
+
+  const [aqiComparison, setAqiComparison] = useState([]);
+  const [comparisonLoading, setComparisonLoading] = useState(true);
+
   const [city, setCity] = useState("Detecting location...");
   const [locationError, setLocationError] = useState("");
 
@@ -148,6 +155,30 @@ export default function Dashboard() {
     };
 
     loadActivities();
+
+    // =====================================================
+    // LOAD AQI CITY COMPARISON
+    // =====================================================
+
+    const loadAQIComparison = async () => {
+      try {
+        setComparisonLoading(true);
+
+        const response = await axios.get(
+          `${API}/api/environment/compare-aqi?cities=Delhi,Lucknow,Mumbai`,
+        );
+
+        setAqiComparison(response.data?.cities || []);
+      } catch (error) {
+        console.log("AQI comparison error:", error);
+
+        setAqiComparison([]);
+      } finally {
+        setComparisonLoading(false);
+      }
+    };
+
+    loadAQIComparison();
 
     // =====================================================
     // LOAD ENVIRONMENTAL DATA
@@ -736,6 +767,62 @@ export default function Dashboard() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* =================================================
+              AQI CITY COMPARISON
+          ================================================= */}
+
+          <div className="environment-section">
+            <h2 className="environment-title">🌍 Compare City AQI</h2>
+
+            <p className="environment-subtitle">
+              Compare air quality across different cities.
+            </p>
+
+            <div className="environment-cards">
+              {comparisonLoading ? (
+                <div className="glass-card environment-card">
+                  <h3>🌫️ AQI Comparison</h3>
+
+                  <p>Loading city AQI data...</p>
+                </div>
+              ) : aqiComparison.length > 0 ? (
+                aqiComparison.map((item) => (
+                  <div className="glass-card environment-card" key={item.city}>
+                    <h3>📍 {item.city}</h3>
+
+                    {item.available ? (
+                      <>
+                        <div className="environment-main-value">
+                          AQI {item.AQI}
+                        </div>
+
+                        <p>
+                          <strong>Status:</strong> {getAQIStatus(item.AQI)}
+                        </p>
+
+                        <p>
+                          <strong>PM2.5:</strong> {item.PM25}
+                        </p>
+
+                        <p>
+                          <strong>PM10:</strong> {item.PM10}
+                        </p>
+                      </>
+                    ) : (
+                      <p>Environmental data not available yet.</p>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="glass-card environment-card">
+                  <h3>🌫️ AQI Comparison</h3>
+
+                  <p>Unable to load city comparison data.</p>
+                </div>
+              )}
             </div>
           </div>
 
