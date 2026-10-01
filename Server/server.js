@@ -29,6 +29,7 @@ const recommendationRoutes = require("./routes/recommendationRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
 const airQualityRoutes = require("./routes/airQualityRoutes");
 const environmentRoutes = require("./routes/environmentRoutes");
+const travelRoutes = require("./routes/travelRoutes");
 startScheduler();
 
 // =========================
@@ -42,6 +43,7 @@ app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/weather", weatherRoutes);
 app.use("/api/air-quality", airQualityRoutes);
 app.use("/api/environment", environmentRoutes);
+app.use("/api/travel", travelRoutes);
 
 // =========================
 // Health Check

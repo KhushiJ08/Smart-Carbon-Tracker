@@ -32,6 +32,7 @@ ChartJS.register(
 );
 
 const API = "https://smart-carbon-tracker-backend.onrender.com";
+const TRAVEL_API = "http://localhost:5000";
 
 export default function Dashboard() {
   const [activities, setActivities] = useState([]);
@@ -39,6 +40,11 @@ export default function Dashboard() {
   const [todayEmission, setTodayEmission] = useState(0);
   const [weekEmission, setWeekEmission] = useState(0);
   const [prediction, setPrediction] = useState("--");
+
+  const [todayTravelEmission, setTodayTravelEmission] = useState(0);
+  const [weeklyTravelEmission, setWeeklyTravelEmission] = useState(0);
+  const [mostUsedTransport, setMostUsedTransport] = useState("--");
+  const [potentialReduction, setPotentialReduction] = useState(0);
 
   // =====================================================
   // ENVIRONMENTAL DATA
@@ -159,6 +165,114 @@ export default function Dashboard() {
     };
 
     loadActivities();
+
+    // =====================================================
+    // LOAD TRAVEL DATA
+    // =====================================================
+
+    const loadTravelData = async () => {
+      try {
+        const response = await axios.get(`${TRAVEL_API}/api/travel/history`, {
+          headers: {
+            Authorization: `Bearer ${user.token}`,
+          },
+        });
+
+        const records = response.data?.data || [];
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const weekStart = new Date();
+        weekStart.setDate(weekStart.getDate() - 7);
+        weekStart.setHours(0, 0, 0, 0);
+
+        let todayTotal = 0;
+        let weekTotal = 0;
+        const modeCount = {};
+
+        records.forEach((travel) => {
+          const emission = Number(travel.estimatedEmission || 0);
+          const date = new Date(travel.createdAt);
+
+          if (date >= today) {
+            todayTotal += emission;
+          }
+
+          if (date >= weekStart) {
+            weekTotal += emission;
+          }
+
+          const mode = travel.transportMode || "Unknown";
+          modeCount[mode] = (modeCount[mode] || 0) + 1;
+        });
+
+        setTodayTravelEmission(todayTotal);
+        setWeeklyTravelEmission(weekTotal);
+
+        const modes = Object.entries(modeCount);
+
+        if (modes.length > 0) {
+          modes.sort((a, b) => b[1] - a[1]);
+          setMostUsedTransport(modes[0][0]);
+        } else {
+          setMostUsedTransport("--");
+        }
+
+        let totalPotentialReduction = 0;
+
+        for (const travel of records) {
+          try {
+            const comparisonResponse = await axios.post(
+              `${TRAVEL_API}/api/travel/compare`,
+              {
+                distance: Number(travel.distance || 0),
+                passengerCount: Number(travel.passengerCount || 1),
+              },
+            );
+
+            const comparison = comparisonResponse.data?.data || [];
+            const comparisonItems = Array.isArray(comparison)
+              ? comparison
+              : Object.values(comparison);
+
+            if (comparisonItems.length > 0) {
+              const currentEmission = Number(travel.estimatedEmission || 0);
+
+              const emissions = comparisonItems
+                .map((item) =>
+                  Number(
+                    item.emission ??
+                      item.totalEmission ??
+                      item.estimatedEmission,
+                  ),
+                )
+                .filter((value) => Number.isFinite(value));
+
+              if (emissions.length > 0) {
+                const lowestEmission = Math.min(...emissions);
+                const reduction = Math.max(0, currentEmission - lowestEmission);
+
+                totalPotentialReduction += reduction;
+              }
+            }
+          } catch (error) {
+            console.log("Travel comparison error:", error);
+          }
+        }
+
+        setPotentialReduction(0);
+      } catch (error) {
+        console.log("Travel dashboard error:", error);
+
+        setTodayTravelEmission(0);
+        setWeeklyTravelEmission(0);
+        setMostUsedTransport("--");
+        setPotentialReduction(0);
+      }
+    };
+
+    loadTravelData();
 
     // =====================================================
     // LOAD ENVIRONMENTAL DATA
@@ -769,6 +883,28 @@ export default function Dashboard() {
             <SummaryCard title="Prediction" value={`${prediction} kg CO₂`} />
 
             <SummaryCard title="Goal" value={`${goal} kg CO₂`} />
+          </div>
+
+          <div className="summary-section travel-dashboard-section">
+            <SummaryCard
+              title="Today's Travel Emissions"
+              value={`${todayTravelEmission.toFixed(2)} kg CO₂e`}
+            />
+
+            <SummaryCard
+              title="Weekly Travel Emissions"
+              value={`${weeklyTravelEmission.toFixed(2)} kg CO₂e`}
+            />
+
+            <SummaryCard
+              title="Most Used Transport"
+              value={mostUsedTransport}
+            />
+
+            <SummaryCard
+              title="Potential Reduction"
+              value={`${potentialReduction.toFixed(2)} kg CO₂e`}
+            />
           </div>
 
           {/* =================================================

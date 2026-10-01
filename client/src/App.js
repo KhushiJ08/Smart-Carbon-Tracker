@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import AddActivity from "./pages/AddActivity";
+import TravelTracker from "./pages/TravelTracker";
 
 function App() {
   return (
@@ -22,6 +23,9 @@ function App() {
 
         {/* Add Activity */}
         <Route path="/add-activity" element={<AddActivity />} />
+
+        {/* Travel Tracker */}
+        <Route path="/travel" element={<TravelTracker />} />
       </Routes>
     </BrowserRouter>
   );

@@ -1,0 +1,245 @@
+.travel-page {
+  min-height: 100vh;
+  padding: 40px 20px 80px;
+}
+
+.travel-container {
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+.travel-header {
+  margin-bottom: 30px;
+}
+
+.travel-header h1 {
+  color: #ffffff;
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+
+.travel-header p {
+  color: #ffffff;
+  font-size: 17px;
+}
+
+.travel-card {
+  background: rgba(0, 0, 0, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 25px;
+  backdrop-filter: blur(10px);
+}
+
+.travel-card h2 {
+  color: #ffffff;
+  margin-bottom: 25px;
+  font-size: 24px;
+}
+
+.travel-field {
+  margin-bottom: 20px;
+}
+
+.travel-field label {
+  display: block;
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.travel-field input,
+.travel-field select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px 15px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  font-size: 16px;
+  outline: none;
+}
+
+.travel-field input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.travel-field select option {
+  color: #000000;
+  background: #ffffff;
+}
+
+.travel-button,
+.travel-save-button {
+  border: none;
+  border-radius: 10px;
+  padding: 14px 22px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.travel-button {
+  background: #b8ff9c;
+  color: #101010;
+  width: 100%;
+}
+
+.travel-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.travel-save-button {
+  background: #b8ff9c;
+  color: #101010;
+}
+
+.travel-error {
+  background: rgba(255, 70, 70, 0.15);
+  border: 1px solid rgba(255, 100, 100, 0.4);
+  color: #ffb3b3;
+  padding: 12px 15px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.travel-results {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+}
+
+.travel-results div {
+  background: rgba(255, 255, 255, 0.06);
+  padding: 18px;
+  border-radius: 12px;
+}
+
+.travel-results strong,
+.travel-results span {
+  display: block;
+}
+
+.travel-results strong {
+  color: #b8ff9c;
+  margin-bottom: 7px;
+}
+
+.travel-results span {
+  color: #ffffff;
+}
+
+.travel-highlight {
+  color: #b8ff9c !important;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.comparison-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.comparison-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.comparison-item strong,
+.comparison-item span {
+  display: block;
+}
+
+.comparison-item strong {
+  color: #ffffff;
+  margin-bottom: 6px;
+}
+
+.comparison-item span {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.comparison-emission {
+  text-align: right;
+}
+
+.comparison-emission strong {
+  color: #b8ff9c;
+}
+
+.recommendation-card {
+  border-left: 4px solid #b8ff9c;
+}
+
+.recommendation-card p {
+  color: #ffffff;
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+@media (max-width: 700px) {
+  .travel-page {
+    padding: 25px 15px 60px;
+  }
+
+  .travel-header h1 {
+    font-size: 30px;
+  }
+
+  .travel-results {
+    grid-template-columns: 1fr;
+  }
+
+  .comparison-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .comparison-emission {
+    text-align: left;
+  }
+}
+.travel-history {
+  margin-top: 40px;
+  padding: 24px;
+  background: #ffffff;
+  border-radius: 12px;
+}
+
+.travel-history h2 {
+  margin-bottom: 20px;
+}
+
+.history-table-wrapper {
+  overflow-x: auto;
+}
+
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.history-table th,
+.history-table td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.history-table th {
+  font-weight: 600;
+}
+
+.history-table td {
+  font-size: 14px;
+}

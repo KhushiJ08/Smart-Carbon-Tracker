@@ -5,7 +5,7 @@ const protect = (req, res, next) => {
 
   if (
     req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
+    req.headers.authorization.startsWith("Bearer ")
   ) {
     try {
       token = req.headers.authorization.split(" ")[1];
@@ -13,20 +13,22 @@ const protect = (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
       req.user = decoded;
+      console.log("Decoded JWT user:", decoded);
 
       next();
+      return;
     } catch (error) {
       return res.status(401).json({
+        success: false,
         message: "Not authorized",
       });
     }
   }
 
-  if (!token) {
-    return res.status(401).json({
-      message: "No token provided",
-    });
-  }
+  return res.status(401).json({
+    success: false,
+    message: "No token provided",
+  });
 };
 
 module.exports = { protect };
