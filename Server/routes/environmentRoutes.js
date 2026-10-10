@@ -311,7 +311,16 @@ router.get("/compare-aqi", async (req, res) => {
           Number.isFinite(age) && age >= 0 && age < COMPARISON_CACHE_DURATION;
       }
 
-      if (dataIsFresh) {
+      const hasCompleteAQI =
+        existingData &&
+        existingData.AQI !== null &&
+        existingData.AQI !== undefined &&
+        existingData.PM25 !== null &&
+        existingData.PM25 !== undefined &&
+        existingData.PM10 !== null &&
+        existingData.PM10 !== undefined;
+
+      if (dataIsFresh && hasCompleteAQI) {
         console.log(`Using cached environmental data for ${city}`);
         continue;
       }

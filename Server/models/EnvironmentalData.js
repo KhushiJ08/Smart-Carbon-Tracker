@@ -4,45 +4,36 @@ const environmentalDataSchema = new mongoose.Schema({
   city: {
     type: String,
     required: true,
+    trim: true,
   },
-
   temperature: {
     type: Number,
     required: true,
   },
-
   humidity: {
     type: Number,
     required: true,
   },
-
   AQI: {
     type: Number,
-    required: true,
+    default: null,
   },
-
   PM25: {
     type: Number,
-    required: true,
+    default: null,
   },
-
   PM10: {
     type: Number,
-    required: true,
+    default: null,
   },
-
   weather: {
     type: String,
     required: true,
   },
-
   timestamp: {
     type: Date,
     default: Date.now,
   },
 });
 
-module.exports = mongoose.model(
-  "EnvironmentalData",
-  environmentalDataSchema
-);
+module.exports = mongoose.model("EnvironmentalData", environmentalDataSchema);
