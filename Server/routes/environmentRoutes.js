@@ -8,15 +8,50 @@ const {
   updateEnvironmentalDataByCoordinates,
 } = require("../services/environmentalService");
 
-// ======================================================
-// Update environmental data using city name
-// ======================================================
+const COMPARISON_CACHE_DURATION = 60 * 60 * 1000;
 
+const normalizeCity = (city) => {
+  return String(city || "")
+    .trim()
+    .toLowerCase();
+};
+
+const escapeRegex = (value) => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+const getLatestEnvironmentalData = async (city) => {
+  const normalizedCity = String(city || "").trim();
+
+  if (!normalizedCity) {
+    return null;
+  }
+
+  return EnvironmentalData.findOne({
+    city: {
+      $regex: `^${escapeRegex(normalizedCity)}$`,
+      $options: "i",
+    },
+  }).sort({
+    timestamp: -1,
+  });
+};
+
+// Update environmental data using city name
 router.get("/update/:city", async (req, res) => {
   try {
-    const data = await updateEnvironmentalData(req.params.city);
+    const city = String(req.params.city || "").trim();
 
-    res.json({
+    if (!city) {
+      return res.status(400).json({
+        success: false,
+        message: "City name is required",
+      });
+    }
+
+    const data = await updateEnvironmentalData(city);
+
+    return res.json({
       success: true,
       message: "Environmental data saved successfully",
       data,
@@ -24,28 +59,42 @@ router.get("/update/:city", async (req, res) => {
   } catch (error) {
     console.error("Environmental update route error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-// ======================================================
 // Update environmental data using GPS coordinates
-// ======================================================
-
 router.post("/update-by-location", async (req, res) => {
   try {
     const { city, latitude, longitude } = req.body;
 
+    const parsedLatitude = Number(latitude);
+    const parsedLongitude = Number(longitude);
+
+    if (
+      latitude === undefined ||
+      longitude === undefined ||
+      latitude === null ||
+      longitude === null ||
+      !Number.isFinite(parsedLatitude) ||
+      !Number.isFinite(parsedLongitude)
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid latitude and longitude are required",
+      });
+    }
+
     const data = await updateEnvironmentalDataByCoordinates(
       city,
-      Number(latitude),
-      Number(longitude),
+      parsedLatitude,
+      parsedLongitude,
     );
 
-    res.json({
+    return res.json({
       success: true,
       message: "Environmental data for current location saved successfully",
       data,
@@ -53,49 +102,45 @@ router.post("/update-by-location", async (req, res) => {
   } catch (error) {
     console.error("Location environmental route error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-// ======================================================
 // Latest environmental data
-// ======================================================
-
 router.get("/latest/:city", async (req, res) => {
   try {
-    const data = await EnvironmentalData.findOne({
-      city: req.params.city,
-    }).sort({
-      timestamp: -1,
-    });
+    const data = await getLatestEnvironmentalData(req.params.city);
 
-    res.json({
+    return res.json({
       success: true,
       data,
     });
   } catch (error) {
-    res.status(500).json({
+    console.error("Latest environmental data error:", error.message);
+
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-// ======================================================
 // Weekly environmental data
-// ======================================================
-
 router.get("/weekly/:city", async (req, res) => {
   try {
     const sevenDaysAgo = new Date();
-
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
+    const cityRegex = new RegExp(
+      `^${escapeRegex(String(req.params.city || "").trim())}$`,
+      "i",
+    );
+
     const data = await EnvironmentalData.find({
-      city: req.params.city,
+      city: cityRegex,
       timestamp: {
         $gte: sevenDaysAgo,
       },
@@ -103,31 +148,32 @@ router.get("/weekly/:city", async (req, res) => {
       timestamp: 1,
     });
 
-    res.json({
+    return res.json({
       success: true,
       count: data.length,
       data,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-// ======================================================
 // Monthly environmental data
-// ======================================================
-
 router.get("/monthly/:city", async (req, res) => {
   try {
     const thirtyDaysAgo = new Date();
-
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+    const cityRegex = new RegExp(
+      `^${escapeRegex(String(req.params.city || "").trim())}$`,
+      "i",
+    );
+
     const data = await EnvironmentalData.find({
-      city: req.params.city,
+      city: cityRegex,
       timestamp: {
         $gte: thirtyDaysAgo,
       },
@@ -135,27 +181,31 @@ router.get("/monthly/:city", async (req, res) => {
       timestamp: 1,
     });
 
-    res.json({
+    return res.json({
       success: true,
       count: data.length,
       data,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-// ======================================================
 // Environmental trend
-// ======================================================
-
 router.get("/trend-data/:city", async (req, res) => {
   try {
+    const cityRegex = new RegExp(
+      `^${escapeRegex(String(req.params.city || "").trim())}$`,
+      "i",
+    );
+
     const data = await EnvironmentalData.find({
-      city: req.params.city,
+      city: cityRegex,
+    }).sort({
+      timestamp: 1,
     });
 
     if (data.length === 0) {
@@ -179,179 +229,117 @@ router.get("/trend-data/:city", async (req, res) => {
     const totalAQI = data.reduce((sum, item) => sum + Number(item.AQI || 0), 0);
 
     const trend = {
-      city: req.params.city,
-
+      city: data[data.length - 1].city,
       averageTemperature: Number((totalTemperature / data.length).toFixed(2)),
-
       averageHumidity: Number((totalHumidity / data.length).toFixed(2)),
-
       averageAQI: Number((totalAQI / data.length).toFixed(2)),
-
       records: data.length,
     };
 
-    res.json({
+    return res.json({
       success: true,
       data: trend,
     });
   } catch (error) {
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 });
 
-// ======================================================
-// AQI COMPARISON BETWEEN MULTIPLE CITIES
-// ======================================================
-
+// AQI comparison between multiple cities
 router.get("/compare-aqi", async (req, res) => {
   try {
     const citiesParam = req.query.cities;
 
-    // --------------------------------------------------
-    // Check cities parameter
-    // --------------------------------------------------
-
-    if (!citiesParam) {
+    if (typeof citiesParam !== "string" || !citiesParam.trim()) {
       return res.status(400).json({
         success: false,
         message: "Please provide cities to compare",
       });
     }
 
-    // --------------------------------------------------
-    // Convert comma-separated cities into an array
-    //
-    // Example:
-    // ?cities=Delhi,Lucknow,Mumbai
-    // --------------------------------------------------
-
     const cities = citiesParam
       .split(",")
       .map((city) => city.trim())
-      .filter((city) => city.length > 0);
+      .filter(Boolean);
 
-    // --------------------------------------------------
-    // At least two cities are required
-    // --------------------------------------------------
+    const uniqueCities = [
+      ...new Map(cities.map((city) => [normalizeCity(city), city])).values(),
+    ];
 
-    if (cities.length < 2) {
+    if (uniqueCities.length < 2) {
       return res.status(400).json({
         success: false,
-        message: "Please provide at least two cities",
+        message: "Please provide at least two different cities",
       });
     }
 
-    // --------------------------------------------------
-    // Remove duplicate cities
-    // --------------------------------------------------
-
-    const uniqueCities = [];
-
-    cities.forEach((city) => {
-      const alreadyExists = uniqueCities.some(
-        (existingCity) => existingCity.toLowerCase() === city.toLowerCase(),
-      );
-
-      if (!alreadyExists) {
-        uniqueCities.push(city);
-      }
-    });
-
-    // --------------------------------------------------
-    // Find existing environmental data
-    // --------------------------------------------------
+    const cityRegexes = uniqueCities.map(
+      (city) => new RegExp(`^${escapeRegex(city)}$`, "i"),
+    );
 
     const results = await EnvironmentalData.find({
       city: {
-        $in: uniqueCities,
+        $in: cityRegexes,
       },
     }).sort({
       timestamp: -1,
     });
 
-    // --------------------------------------------------
-    // Keep only latest record for each city
-    // --------------------------------------------------
-
     const latestByCity = {};
 
-    results.forEach((item) => {
-      if (!latestByCity[item.city]) {
-        latestByCity[item.city] = item;
-      }
-    });
+    for (const item of results) {
+      const cityKey = normalizeCity(item.city);
 
-    // --------------------------------------------------
-    // Check every requested city
-    // --------------------------------------------------
+      if (!latestByCity[cityKey]) {
+        latestByCity[cityKey] = item;
+      }
+    }
 
     for (const city of uniqueCities) {
-      const existingData = latestByCity[city];
+      const cityKey = normalizeCity(city);
+      const existingData = latestByCity[cityKey];
 
-      // ------------------------------------------------
-      // If data exists, check its age
-      // ------------------------------------------------
+      let dataIsFresh = false;
 
-      if (existingData) {
-        const timestamp = new Date(existingData.timestamp).getTime();
+      if (existingData && existingData.timestamp) {
+        const age = Date.now() - new Date(existingData.timestamp).getTime();
 
-        const age = Date.now() - timestamp;
-
-        // One hour
-        const oneHour = 60 * 60 * 1000;
-
-        // ------------------------------------------------
-        // Use cached data if it is less than one hour old
-        // ------------------------------------------------
-
-        if (age < oneHour) {
-          console.log(`Using cached AQI data for ${city}`);
-
-          continue;
-        }
+        dataIsFresh =
+          Number.isFinite(age) && age >= 0 && age < COMPARISON_CACHE_DURATION;
       }
 
-      // ------------------------------------------------
-      // City has no data OR old data
-      //
-      // Try to fetch fresh data
-      // ------------------------------------------------
+      if (dataIsFresh) {
+        console.log(`Using cached environmental data for ${city}`);
+        continue;
+      }
 
       try {
-        console.log(`Fetching fresh environmental data for ${city}`);
+        console.log(`Updating environmental data for ${city}`);
 
         const freshData = await updateEnvironmentalData(city);
 
-        latestByCity[city] = freshData;
-
-        console.log(`Environmental data updated for ${city}`);
+        if (freshData) {
+          latestByCity[cityKey] = freshData;
+        }
       } catch (error) {
-        console.error(`Unable to update ${city}:`, error.message);
+        console.error(
+          `Unable to update environmental data for ${city}:`,
+          error.message,
+        );
 
-        // ------------------------------------------------
-        // If fresh API request fails but old data exists,
-        // keep the old database value.
-        // ------------------------------------------------
-
+        // Keep the existing saved record, if available.
+        // Never substitute data belonging to another city.
         if (!existingData) {
-          latestByCity[city] = null;
+          latestByCity[cityKey] = null;
         }
       }
     }
 
-    // --------------------------------------------------
-    // Build final comparison response
-    // --------------------------------------------------
-
     const comparison = uniqueCities.map((city) => {
-      const data = latestByCity[city];
-
-      // ------------------------------------------------
-      // No data available
-      // ------------------------------------------------
+      const data = latestByCity[normalizeCity(city)];
 
       if (!data) {
         return {
@@ -363,15 +351,13 @@ router.get("/compare-aqi", async (req, res) => {
           temperature: null,
           humidity: null,
           weather: null,
+          timestamp: null,
+          message: "No environmental data available for this city",
         };
       }
 
-      // ------------------------------------------------
-      // Data available
-      // ------------------------------------------------
-
       return {
-        city: data.city,
+        city,
         available: true,
         AQI: data.AQI,
         PM25: data.PM25,
@@ -383,19 +369,11 @@ router.get("/compare-aqi", async (req, res) => {
       };
     });
 
-    // --------------------------------------------------
-    // Sort available cities by AQI
-    //
-    // Lower AQI = better air quality
-    // --------------------------------------------------
-
     comparison.sort((a, b) => {
-      // Both unavailable
       if (!a.available && !b.available) {
         return 0;
       }
 
-      // Put unavailable cities at the bottom
       if (!a.available) {
         return 1;
       }
@@ -404,30 +382,21 @@ router.get("/compare-aqi", async (req, res) => {
         return -1;
       }
 
-      // Lowest AQI first
-      return a.AQI - b.AQI;
+      return Number(a.AQI) - Number(b.AQI);
     });
 
-    // --------------------------------------------------
-    // Send response
-    // --------------------------------------------------
-
-    res.json({
+    return res.json({
       success: true,
       cities: comparison,
     });
   } catch (error) {
     console.error("AQI comparison error:", error.message);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Unable to compare AQI",
     });
   }
 });
-
-// ======================================================
-// EXPORT ROUTER
-// ======================================================
 
 module.exports = router;
