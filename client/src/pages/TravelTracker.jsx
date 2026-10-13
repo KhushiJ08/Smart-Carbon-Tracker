@@ -3,7 +3,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import "./TravelTracker.css";
 
-const API = "http://localhost:5000";
+const API = "https://smart-carbon-tracker-backend.onrender.com";
 
 const transportModes = [
   {

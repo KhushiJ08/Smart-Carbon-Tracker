@@ -32,7 +32,7 @@ ChartJS.register(
 );
 
 const API = "https://smart-carbon-tracker-backend.onrender.com";
-const TRAVEL_API = "http://localhost:5000";
+const TRAVEL_API = "https://smart-carbon-tracker-backend.onrender.com";
 
 export default function Dashboard() {
   const [activities, setActivities] = useState([]);
